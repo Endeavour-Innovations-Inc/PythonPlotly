@@ -8,6 +8,10 @@ import base64
 import io
 from flask_cors import CORS
 from dash.exceptions import PreventUpdate
+from flask import send_file
+import xlsxwriter
+import csv
+
 
 server = Flask(__name__)
 CORS(server)
@@ -71,21 +75,34 @@ def update_graph(contents, reset_clicks):
     [State('my-graph', 'figure')],
     prevent_initial_call=True
 )
-def export_to_excel(n_clicks, figure_data):
+
+def export_to_csv(n_clicks, figure_data):
     if n_clicks is None:
         raise PreventUpdate
 
+    global df  # Declare 'df' as global so it can be accessed in the download_csv route
     df = pd.DataFrame({
-        'Time': figure_data['data'][0]['x'],
-        'Amplitude (V)': figure_data['data'][0]['y']
+        't': figure_data['data'][0]['x'],
+        'data': figure_data['data'][0]['y']
     })
+
+    # Instead of returning send_file, we return a dcc.Location component to redirect.
+    return dcc.Location(href='/download-csv', id='download-csv-trigger')
+
+
+@server.route('/download-csv')
+def download_csv():
+    # This function uses the 'df' global DataFrame to create a CSV in memory
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name='Data', index=False)
-        writer.save()
+    df.to_csv(output, index=False, encoding='utf-8')
     output.seek(0)
-    return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                     attachment_filename='data.xlsx', as_attachment=True)
+
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='data.csv'
+    )
 
 if __name__ == '__main__':
     app.run_server(debug=True)
