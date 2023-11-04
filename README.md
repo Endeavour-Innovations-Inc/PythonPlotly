@@ -4,3 +4,10 @@ So the current code contains the following files:
 3. .csv data files for testing
 4. Simplescope html code which contains the layout for the production version of the UI
 5. usb_reader.py -> code utilizing PyUSB
+
+To launch the frontnend:
+python failsafe_app.py
+
+OR
+
+python3 failsafe_app.py
