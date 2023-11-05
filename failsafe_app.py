@@ -26,7 +26,35 @@ layout = go.Layout(
     autosize=True
 )
 
+# Define your CSS styles inside a style tag
+styles = {
+    'graphControl': {
+        'display': 'flex',
+        'justifyContent': 'space-between',
+        'alignItems': 'center',
+        'margin': '40px 0',
+        'gap': '15px'
+    },
+    'buttonGroup': {
+        'display': 'flex',
+        'gap': '1px'
+    },
+    'chartDiv': {
+        'borderTop': '1px solid rgba(0, 0, 0, 0.3)',
+        'borderBottom': '1px solid rgba(0, 0, 0, 0.3)',
+        'margin': '20px 0'
+    },
+    'cornerButtons': {
+        'position': 'absolute',
+        'left': '10px',
+        'bottom': '10px',
+        'display': 'flex',
+        'gap': '10px'
+    }
+}
+
 # App layout definition including Upload component and Graph component
+# Define the layout of your app
 app.layout = html.Div([
     dcc.Upload(
         id='upload-data',
@@ -34,9 +62,33 @@ app.layout = html.Div([
         multiple=False
     ),
     html.Button('Reset', id='reset-button'),
-    dcc.Graph(id='my-graph', figure={'data': [initial_trace], 'layout': layout}),
     html.Button('Export Data', id='export-button'),
-    html.Div(id='dummy-div')  # Dummy div for triggering the download
+    
+    # Graph control buttons (styled as per your CSS)
+    html.Div(id='graphControl', style=styles['graphControl'], children=[
+        html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
+            html.Button('↑', id='zoom-in'),
+            html.Button('↓', id='zoom-out'),
+            html.Button('Sub 3', id='sub-3')
+        ]),
+        html.Button('Button 2', id='btn-2'),
+        html.Button('Button 3', id='btn-3'),
+        html.Button('Button 4', id='btn-4'),
+    ]),
+    
+    # Placeholder for the graph with division lines (styled as per your CSS)
+    html.Div(id='chartDiv', style=styles['chartDiv'], children=[
+        dcc.Graph(id='my-graph', figure={'data': [initial_trace], 'layout': layout}),
+    ]),
+    
+    # Small buttons in the lower left corner (styled as per your CSS)
+    html.Div(id='cornerButtons', style=styles['cornerButtons'], children=[
+        html.Button('Vert', id='vert-button'),
+        html.Button('Horz', id='horz-button'),
+    ]),
+    
+    # Dummy div for triggering downloads
+    html.Div(id='dummy-div')
 ])
 
 # Combined callback for updating graph with uploaded CSV data and resetting the graph
