@@ -11,6 +11,7 @@ from dash.exceptions import PreventUpdate
 from flask import send_file
 import xlsxwriter
 import csv
+from scipy.signal import lfilter
 
 
 server = Flask(__name__)
@@ -50,6 +51,47 @@ styles = {
         'bottom': '10px',
         'display': 'flex',
         'gap': '10px'
+    },
+    'switch': {
+        'display': 'flex',
+        'alignItems': 'center'
+    },
+    'switchInput': {
+        'display': 'none'
+    },
+    'switchLabel': {
+        'position': 'relative',
+        'display': 'inline-block',
+        'width': '60px',
+        'height': '34px'
+    },
+    'switchLabelBefore': {
+        'content': '""',  # This might not work as expected, pseudo-elements may need to be handled differently
+        'position': 'absolute',
+        'top': '0',
+        'left': '0',
+        'width': '100%',
+        'height': '100%',
+        'backgroundColor': '#ccc',
+        'borderRadius': '34px',
+        'transition': '.4s'
+    },
+    'switchLabelAfter': {
+        'content': '""',  # Same issue with content property here
+        'position': 'absolute',
+        'top': '4px',
+        'left': '4px',
+        'width': '26px',
+        'height': '26px',
+        'backgroundColor': 'white',
+        'borderRadius': '50%',
+        'transition': '.4s'
+    },
+    'switchInputChecked': {
+        'backgroundColor': '#2196F3'
+    },
+    'switchLabelAfterChecked': {
+        'transform': 'translateX(26px)'
     }
 }
 
@@ -61,6 +103,15 @@ app.layout = html.Div([
         children=html.Button('Upload File'),
         multiple=False
     ),
+    html.Label([
+        "Enable Filter:",
+        dcc.Checklist(
+            id='filter-switch',
+            options=[{'label': '', 'value': 'on'}],  # Empty label for custom styling
+            value=[],
+            className="switch"  # This is the custom class name for styling
+        )
+    ], className="switch-container"),  # Add a class for the label if needed for additional styling
     html.Button('Reset', id='reset-button'),
     html.Button('Export Data', id='export-button'),
     
@@ -91,59 +142,59 @@ app.layout = html.Div([
     html.Div(id='dummy-div')
 ])
 
-# Combined callback for updating graph with uploaded CSV data and resetting the graph
+# Initialize 'df' as a global variable outside of your callbacks
+global df
+df = pd.DataFrame()
+
+# Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
     Output('my-graph', 'figure'),
     [Input('upload-data', 'contents'),
      Input('reset-button', 'n_clicks')],
+    [State('filter-switch', 'value')],  # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(contents, reset_clicks):
+def update_graph(contents, reset_clicks, filter_enabled):
+    global df 
+    # You would still define your filter coefficients here if they are not already defined
+    b = [1, -0.95]  # Numerator coefficients
+    a = [1]         # Denominator coefficients
+
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        # If no inputs have been triggered, there's nothing to update
         raise PreventUpdate
 
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if triggered_id == 'reset-button':
+        # This clears the graph to its initial state
+        df = pd.DataFrame()  # Reset the 'df' variable
+        return {'data': [initial_trace], 'layout': layout}
 
     if triggered_id == 'upload-data' and contents:
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
 
-        trace = go.Scatter(x=df['t'], y=df['data'], mode='lines')
+        # Check if the filter switch is enabled and apply the filter
+        if 'on' in filter_enabled:  # Ensure 'on' is in the list to check for the filter
+            filtered_data = lfilter(b, a, df['data'])
+            trace = go.Scatter(x=df['t'], y=filtered_data, mode='lines', name='Filtered Data')
+        else:
+            trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
+
         return {'data': [trace], 'layout': layout}
 
     elif triggered_id == 'reset-button':
+        # This clears the graph to its initial state
         return {'data': [initial_trace], 'layout': layout}
 
     raise PreventUpdate
 
-# Callback for exporting the current graph's data to Excel
-@app.callback(
-    Output('dummy-div', 'children'),
-    [Input('export-button', 'n_clicks')],
-    [State('my-graph', 'figure')],
-    prevent_initial_call=True
-)
-
-def export_to_csv(n_clicks, figure_data):
-    if n_clicks is None:
-        raise PreventUpdate
-
-    global df  # Declare 'df' as global so it can be accessed in the download_csv route
-    df = pd.DataFrame({
-        't': figure_data['data'][0]['x'],
-        'data': figure_data['data'][0]['y']
-    })
-
-    # Instead of returning send_file, we return a dcc.Location component to redirect.
-    return dcc.Location(href='/download-csv', id='download-csv-trigger')
-
-
 @server.route('/download-csv')
 def download_csv():
+    global df  
     # This function uses the 'df' global DataFrame to create a CSV in memory
     output = io.BytesIO()
     df.to_csv(output, index=False, encoding='utf-8')
