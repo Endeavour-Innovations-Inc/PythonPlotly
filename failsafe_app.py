@@ -104,22 +104,18 @@ app.layout = html.Div([
         children=html.Button('Upload File'),
         multiple=False
     ),
-    html.Label([
-        "Enable Filter:",
-        dcc.Checklist(
-            id='filter-switch',
-            options=[{'label': '', 'value': 'on'}],  # Empty label for custom styling
-            value=[],
-            className="switch"  # This is the custom class name for styling
-        )
-    ], className="switch-container"),  # Add a class for the label if needed for additional styling
+    html.Button('Enable Filter: Off', id='filter-toggle', n_clicks=0),
     html.Button('Reset', id='reset-button'),
     html.Button('Export Data', id='export-button'),
     
     # Graph control buttons (styled as per your CSS)
     # Graph control buttons (styled as per your CSS)
     html.Div(id='graphControl', style=styles['graphControl'], children=[
-        html.Button('Button 2', id='btn-2'),
+        html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
+            html.Button('↑', id='zoom-in'),
+            html.Button('Sub 3', id='sub-3'),
+            html.Button('↓', id='zoom-out'),
+        ]),
         html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
             html.Button('↑', id='zoom-in'),
             html.Button('↓', id='zoom-out'),
@@ -151,16 +147,28 @@ app.layout = html.Div([
 global df
 df = pd.DataFrame()
 
+# Callback to handle filter toggle button
+@app.callback(
+    Output('filter-toggle', 'children'),
+    [Input('filter-toggle', 'n_clicks')]
+)
+def toggle_filter(n_clicks):
+    if n_clicks % 2 == 0:  # If even number of clicks, filter is off
+        return 'Enable Filter: Off'
+    else:  # If odd number of clicks, filter is on
+        return 'Enable Filter: On'
+
+
 # Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
     Output('my-graph', 'figure'),
     [Input('upload-data', 'contents'),
      Input('upload-data', 'filename'),  # Change the input to filename
      Input('reset-button', 'n_clicks')],
-    [State('filter-switch', 'value')],  # Add the switch's value as State
+    [State('filter-toggle', 'children')],  # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(contents, filename, reset_clicks, filter_enabled):
+def update_graph(contents, filename, reset_clicks, filter_toggle_label):
     global df 
     ctx = dash.callback_context
 
@@ -182,7 +190,7 @@ def update_graph(contents, filename, reset_clicks, filter_enabled):
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         
         # Check if the filter switch is enabled and apply the filter
-        if 'on' in filter_enabled:
+        if 'On' in filter_toggle_label:
             # Define filter coefficients here for smoothing
             b = [1, -0.95]  # Numerator coefficients
             a = [1]         # Denominator coefficients
