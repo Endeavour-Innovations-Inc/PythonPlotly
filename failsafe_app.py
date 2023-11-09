@@ -96,17 +96,36 @@ styles = {
     }
 }
 
+# Define a vertical layout style
+vertical_layout_style = {
+    'display': 'flex',
+    'flexDirection': 'column',
+    'alignItems': 'left',
+    'justifyContent': 'center',
+    'gap': '10px',  # Adjust the gap to your liking
+}
+
+# Define a style for the buttons and upload to make them less wide
+button_style = {
+    'width': 'auto',  # Set the width to 'auto' or specific value to make buttons less wide
+    'maxWidth': '300px',  # Adjust the max width as needed
+    'margin': '0 auto 10px auto'  # Add margins to center the buttons in the parent container
+}
+
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
 app.layout = html.Div([
-    dcc.Upload(
-        id='upload-data',
-        children=html.Button('Upload File'),
-        multiple=False
-    ),
-    html.Button('Enable Filter: Off', id='filter-toggle', n_clicks=0),
-    html.Button('Reset', id='reset-button'),
-    html.Button('Export Data', id='export-button'),
+    html.Div([
+        dcc.Upload(
+            id='upload-data',
+            children=html.Button('Upload File', style={'width': '10%'}),
+            multiple=False,
+            style={'width': '100%'}
+        ),
+        html.Button('Enable Filter: Off', id='filter-toggle', n_clicks=0, style={'width': '10%'}),
+        html.Button('Reset', id='reset-button', style={'width': '10%'}),
+        html.Button('Export Data', id='export-button', style={'width': '10%'}),
+    ], style=vertical_layout_style),
     
     # Graph control buttons (styled as per your CSS)
     # Graph control buttons (styled as per your CSS)
