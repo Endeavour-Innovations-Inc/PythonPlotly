@@ -12,6 +12,7 @@ from flask import send_file
 import xlsxwriter
 import csv
 from scipy.signal import lfilter
+from datetime import datetime
 
 
 server = Flask(__name__)
@@ -116,16 +117,18 @@ app.layout = html.Div([
     html.Button('Export Data', id='export-button'),
     
     # Graph control buttons (styled as per your CSS)
+    # Graph control buttons (styled as per your CSS)
     html.Div(id='graphControl', style=styles['graphControl'], children=[
+        html.Button('Button 2', id='btn-2'),
         html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
             html.Button('↑', id='zoom-in'),
             html.Button('↓', id='zoom-out'),
             html.Button('Sub 3', id='sub-3')
         ]),
-        html.Button('Button 2', id='btn-2'),
         html.Button('Button 3', id='btn-3'),
         html.Button('Button 4', id='btn-4'),
     ]),
+
     
     # Placeholder for the graph with division lines (styled as per your CSS)
     html.Div(id='chartDiv', style=styles['chartDiv'], children=[
@@ -137,6 +140,8 @@ app.layout = html.Div([
         html.Button('Vert', id='vert-button'),
         html.Button('Horz', id='horz-button'),
     ]),
+
+    html.Div(id='upload-timestamp', style={'display': 'none'}),
     
     # Dummy div for triggering downloads
     html.Div(id='dummy-div')
@@ -150,35 +155,37 @@ df = pd.DataFrame()
 @app.callback(
     Output('my-graph', 'figure'),
     [Input('upload-data', 'contents'),
+     Input('upload-data', 'filename'),  # Change the input to filename
      Input('reset-button', 'n_clicks')],
     [State('filter-switch', 'value')],  # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(contents, reset_clicks, filter_enabled):
+def update_graph(contents, filename, reset_clicks, filter_enabled):
     global df 
-    # You would still define your filter coefficients here if they are not already defined
-    b = [1, -0.95]  # Numerator coefficients
-    a = [1]         # Denominator coefficients
-
     ctx = dash.callback_context
 
-    if not ctx.triggered:
-        raise PreventUpdate
-
+    # Determine which input was triggered
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
+    # If the reset button is clicked, clear the graph
     if triggered_id == 'reset-button':
-        # This clears the graph to its initial state
         df = pd.DataFrame()  # Reset the 'df' variable
         return {'data': [initial_trace], 'layout': layout}
 
+    # If new file data is uploaded, update the graph
     if triggered_id == 'upload-data' and contents:
+        # Generate a timestamp to force the update
+        timestamp = datetime.now()
+        
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-
+        
         # Check if the filter switch is enabled and apply the filter
-        if 'on' in filter_enabled:  # Ensure 'on' is in the list to check for the filter
+        if 'on' in filter_enabled:
+            # Define filter coefficients here for smoothing
+            b = [1, -0.95]  # Numerator coefficients
+            a = [1]         # Denominator coefficients
             filtered_data = lfilter(b, a, df['data'])
             trace = go.Scatter(x=df['t'], y=filtered_data, mode='lines', name='Filtered Data')
         else:
@@ -186,10 +193,7 @@ def update_graph(contents, reset_clicks, filter_enabled):
 
         return {'data': [trace], 'layout': layout}
 
-    elif triggered_id == 'reset-button':
-        # This clears the graph to its initial state
-        return {'data': [initial_trace], 'layout': layout}
-
+    # Prevents update if not triggered by the inputs we're interested in
     raise PreventUpdate
 
 @server.route('/download-csv')
