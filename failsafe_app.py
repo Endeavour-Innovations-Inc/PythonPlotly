@@ -130,15 +130,15 @@ app.layout = html.Div([
     # Graph control buttons (styled as per your CSS)
     # Graph control buttons (styled as per your CSS)
     html.Div(id='graphControl', style=styles['graphControl'], children=[
-        html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
-            html.Button('↑', id='zoom-in'),
-            html.Button('Sub 3', id='sub-3'),
-            html.Button('↓', id='zoom-out'),
+        html.Div(id='buttonGroup1', style=styles['buttonGroup'], children=[
+            html.Button('↑', id='zoom-in1'),
+            html.Button('Sub 3', id='sub-31'),
+            html.Button('↓', id='zoom-out1'),
         ]),
-        html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
-            html.Button('↑', id='zoom-in'),
-            html.Button('↓', id='zoom-out'),
-            html.Button('Sub 3', id='sub-3')
+        html.Div(id='buttonGroup2', style=styles['buttonGroup'], children=[
+            html.Button('↑', id='zoom-in2'),
+            html.Button('↓', id='zoom-out2'),
+            html.Button('Sub 3', id='sub-32')
         ]),
         html.Button('Button 3', id='btn-3'),
         html.Button('Button 4', id='btn-4'),
@@ -158,8 +158,8 @@ app.layout = html.Div([
 
     html.Div(id='upload-timestamp', style={'display': 'none'}),
     
-    # Dummy div for triggering downloads
-    html.Div(id='dummy-div')
+    # Component for triggering downloads
+    dcc.Download(id='download-dataframe-csv')
 ])
 
 # Initialize 'df' as a global variable outside of your callbacks
@@ -237,6 +237,18 @@ def download_csv():
         as_attachment=True,
         download_name='data.csv'
     )
+
+# Callback to trigger a download when the 'Export Data' button is clicked
+@app.callback(
+    Output('download-dataframe-csv', 'data'),
+    [Input('export-button', 'n_clicks')],
+    prevent_initial_call=True
+)
+def export_data(n_clicks):
+    if n_clicks is None:
+        raise PreventUpdate
+    # Trigger download
+    return dcc.send_data_frame(df.to_csv, "data.csv", index=False)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
