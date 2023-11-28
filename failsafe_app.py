@@ -151,10 +151,41 @@ app.layout = html.Div([
     ]),
     
     # Small buttons in the lower left corner (styled as per your CSS)
-    html.Div(id='cornerButtons', style=styles['cornerButtons'], children=[
-        html.Button('Vert', id='vert-button'),
-        html.Button('Horz', id='horz-button'),
+    # html.Div(id='cornerButtons', style=styles['cornerButtons'], children=[
+    #    html.Button('Vert', id='vert-button'),
+    #    html.Button('Horz', id='horz-button'),
+    # ]),
+
+    # Add a large transparent rectangle with a smaller rectangle and a button inside
+    html.Div(id='large-rectangle', style={
+        'position': 'absolute',
+        'left': '10px',
+        'bottom': '10px',
+        'width': '250px',  # Increased width of the parent rectangle
+        'height': '60px',  # Height of the parent rectangle
+        'border': '1px solid black',  # Black border for the parent rectangle
+        'borderRadius': '5px',  # Optional rounded corners for the parent
+        'display': 'flex',
+        'alignItems': 'center',
+        'justifyContent': 'space-between',  # Adjusted for spacing between elements
+        'backgroundColor': 'transparent',  # Transparent background
+        'padding': '5px',  # Padding inside the parent rectangle
+    }, children=[
+        html.Div('View Mode', style={
+            'border': '2px solid darkblue',  # Dark blue border for the child rectangle
+            'padding': '10px 20px',  # Padding inside the child rectangle
+            'borderRadius': '5px',  # Optional rounded corners for the child
+            'backgroundColor': 'transparent',  # Transparent background for the child
+            'color': 'darkblue',  # Text color
+            'fontWeight': 'bold',  # Bold text
+        }),
+        html.Button('Normal', id='normal-button', style={
+            'display': 'inline-block',  # Adjusted display property
+            'margin': '0 auto',  # Centering the button
+            'textAlign': 'center',  # Center text inside the button
+        })
     ]),
+
 
     html.Div(id='upload-timestamp', style={'display': 'none'}),
     
@@ -249,6 +280,19 @@ def export_data(n_clicks):
         raise PreventUpdate
     # Trigger download
     return dcc.send_data_frame(df.to_csv, "data.csv", index=False)
+
+# Callback to toggle the "Normal" button label
+@app.callback(
+    Output('normal-button', 'children'),
+    [Input('normal-button', 'n_clicks')],
+    [State('normal-button', 'children')],
+    prevent_initial_call=True
+)
+def toggle_normal_button(n_clicks, current_label):
+    if current_label == 'Normal':
+        return 'FFT'
+    else:
+        return 'Normal'
 
 if __name__ == '__main__':
     app.run_server(debug=True)
