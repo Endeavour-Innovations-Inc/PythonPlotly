@@ -11,6 +11,8 @@ from dash.exceptions import PreventUpdate
 from flask import send_file
 import xlsxwriter
 import csv
+from scipy.signal import lfilter
+from datetime import datetime
 
 
 server = Flask(__name__)
@@ -50,31 +52,98 @@ styles = {
         'bottom': '10px',
         'display': 'flex',
         'gap': '10px'
+    },
+    'switch': {
+        'display': 'flex',
+        'alignItems': 'center'
+    },
+    'switchInput': {
+        'display': 'none'
+    },
+    'switchLabel': {
+        'position': 'relative',
+        'display': 'inline-block',
+        'width': '60px',
+        'height': '34px'
+    },
+    'switchLabelBefore': {
+        'content': '""',  # This might not work as expected, pseudo-elements may need to be handled differently
+        'position': 'absolute',
+        'top': '0',
+        'left': '0',
+        'width': '100%',
+        'height': '100%',
+        'backgroundColor': '#ccc',
+        'borderRadius': '34px',
+        'transition': '.4s'
+    },
+    'switchLabelAfter': {
+        'content': '""',  # Same issue with content property here
+        'position': 'absolute',
+        'top': '4px',
+        'left': '4px',
+        'width': '26px',
+        'height': '26px',
+        'backgroundColor': 'white',
+        'borderRadius': '50%',
+        'transition': '.4s'
+    },
+    'switchInputChecked': {
+        'backgroundColor': '#2196F3'
+    },
+    'switchLabelAfterChecked': {
+        'transform': 'translateX(26px)'
     }
+}
+
+# Define a vertical layout style
+vertical_layout_style = {
+    'display': 'flex',
+    'flexDirection': 'column',
+    'alignItems': 'left',
+    'justifyContent': 'center',
+    'gap': '10px',  # Adjust the gap to your liking
+}
+
+# Define a style for the buttons and upload to make them less wide
+button_style = {
+    'width': 'auto',  # Set the width to 'auto' or specific value to make buttons less wide
+    'maxWidth': '300px',  # Adjust the max width as needed
+    'margin': '0 auto 10px auto'  # Add margins to center the buttons in the parent container
 }
 
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
 app.layout = html.Div([
-    dcc.Upload(
-        id='upload-data',
-        children=html.Button('Upload File'),
-        multiple=False
-    ),
-    html.Button('Reset', id='reset-button'),
-    html.Button('Export Data', id='export-button'),
+    html.Div([
+        dcc.Upload(
+            id='upload-data',
+            children=html.Button('Upload File', style={'width': '10%'}),
+            multiple=False,
+            style={'width': '100%'}
+        ),
+        html.Button('Enable Filter: Off', id='filter-toggle', n_clicks=0, style={'width': '10%'}),
+        html.Button('Reset', id='reset-button', style={'width': '10%'}),
+        html.Button('Export Data', id='export-button', style={'width': '10%'}),
+    ], style=vertical_layout_style),
     
     # Graph control buttons (styled as per your CSS)
+    # Graph control buttons (styled as per your CSS)
     html.Div(id='graphControl', style=styles['graphControl'], children=[
-        html.Div(id='buttonGroup', style=styles['buttonGroup'], children=[
-            html.Button('↑', id='zoom-in'),
-            html.Button('↓', id='zoom-out'),
-            html.Button('Sub 3', id='sub-3')
+        html.Div(id='buttonGroup1', style=styles['buttonGroup'], children=[
+            html.Button('↑', id='zoom-in1'),
+            html.Button('Sub 3', id='sub-31'),
+            html.Button('↓', id='zoom-out1'),
         ]),
-        html.Button('Button 2', id='btn-2'),
+        html.Div(id='buttonGroup2', style=styles['buttonGroup'], children=[
+            html.Button('↑', id='zoom-in2'),
+            html.Button('↓', id='zoom-out2'),
+            html.Button('Sub 3', id='sub-32')
+        ]),
         html.Button('Button 3', id='btn-3'),
         html.Button('Button 4', id='btn-4'),
     ]),
+
     
     # Placeholder for the graph with division lines (styled as per your CSS)
     html.Div(id='chartDiv', style=styles['chartDiv'], children=[
@@ -86,64 +155,77 @@ app.layout = html.Div([
         html.Button('Vert', id='vert-button'),
         html.Button('Horz', id='horz-button'),
     ]),
+
+    html.Div(id='upload-timestamp', style={'display': 'none'}),
     
-    # Dummy div for triggering downloads
-    html.Div(id='dummy-div')
+    # Component for triggering downloads
+    dcc.Download(id='download-dataframe-csv')
 ])
 
-# Combined callback for updating graph with uploaded CSV data and resetting the graph
+# Initialize 'df' as a global variable outside of your callbacks
+global df
+df = pd.DataFrame()
+
+# Callback to handle filter toggle button
+@app.callback(
+    Output('filter-toggle', 'children'),
+    [Input('filter-toggle', 'n_clicks')]
+)
+def toggle_filter(n_clicks):
+    if n_clicks % 2 == 0:  # If even number of clicks, filter is off
+        return 'Enable Filter: Off'
+    else:  # If odd number of clicks, filter is on
+        return 'Enable Filter: On'
+
+
+# Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
     Output('my-graph', 'figure'),
     [Input('upload-data', 'contents'),
+     Input('upload-data', 'filename'),  # Change the input to filename
      Input('reset-button', 'n_clicks')],
+    [State('filter-toggle', 'children')],  # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(contents, reset_clicks):
+def update_graph(contents, filename, reset_clicks, filter_toggle_label):
+    global df 
     ctx = dash.callback_context
 
-    if not ctx.triggered:
-        # If no inputs have been triggered, there's nothing to update
-        raise PreventUpdate
-
+    # Determine which input was triggered
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
+    # If the reset button is clicked, clear the graph
+    if triggered_id == 'reset-button':
+        df = pd.DataFrame()  # Reset the 'df' variable
+        return {'data': [initial_trace], 'layout': layout}
+
+    # If new file data is uploaded, update the graph
     if triggered_id == 'upload-data' and contents:
+        # Generate a timestamp to force the update
+        timestamp = datetime.now()
+        
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+        
+        # Check if the filter switch is enabled and apply the filter
+        if 'On' in filter_toggle_label:
+            # Define filter coefficients here for smoothing
+            b = [1, -0.95]  # Numerator coefficients
+            a = [1]         # Denominator coefficients
+            filtered_data = lfilter(b, a, df['data'])
+            trace = go.Scatter(x=df['t'], y=filtered_data, mode='lines', name='Filtered Data')
+        else:
+            trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
 
-        trace = go.Scatter(x=df['t'], y=df['data'], mode='lines')
         return {'data': [trace], 'layout': layout}
 
-    elif triggered_id == 'reset-button':
-        return {'data': [initial_trace], 'layout': layout}
-
+    # Prevents update if not triggered by the inputs we're interested in
     raise PreventUpdate
-
-# Callback for exporting the current graph's data to Excel
-@app.callback(
-    Output('dummy-div', 'children'),
-    [Input('export-button', 'n_clicks')],
-    [State('my-graph', 'figure')],
-    prevent_initial_call=True
-)
-
-def export_to_csv(n_clicks, figure_data):
-    if n_clicks is None:
-        raise PreventUpdate
-
-    global df  # Declare 'df' as global so it can be accessed in the download_csv route
-    df = pd.DataFrame({
-        't': figure_data['data'][0]['x'],
-        'data': figure_data['data'][0]['y']
-    })
-
-    # Instead of returning send_file, we return a dcc.Location component to redirect.
-    return dcc.Location(href='/download-csv', id='download-csv-trigger')
-
 
 @server.route('/download-csv')
 def download_csv():
+    global df  
     # This function uses the 'df' global DataFrame to create a CSV in memory
     output = io.BytesIO()
     df.to_csv(output, index=False, encoding='utf-8')
@@ -155,6 +237,18 @@ def download_csv():
         as_attachment=True,
         download_name='data.csv'
     )
+
+# Callback to trigger a download when the 'Export Data' button is clicked
+@app.callback(
+    Output('download-dataframe-csv', 'data'),
+    [Input('export-button', 'n_clicks')],
+    prevent_initial_call=True
+)
+def export_data(n_clicks):
+    if n_clicks is None:
+        raise PreventUpdate
+    # Trigger download
+    return dcc.send_data_frame(df.to_csv, "data.csv", index=False)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
