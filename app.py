@@ -334,6 +334,7 @@ rectangle_4_content = html.Div([
                 {'label': 'DC', 'value': 'DC'}
             ],
             value='AC',  # Default value
+            clearable=False,
             style=dropdown_style
         ),
         html.Div("Attenuation", style=centered_section_style),
@@ -344,6 +345,7 @@ rectangle_4_content = html.Div([
                 {'label': '10x', 'value': '10x'}
             ],
             value='1x',  # Default value
+            clearable=False,
             style=dropdown_style
         )
     ], style={'display': 'inline-block', 'width': '60%', 'textAlign': 'center'})
@@ -363,18 +365,20 @@ toggle_button_style = {
 rectangle_8_content = html.Div([
     html.Div("Trigger Setup", style=inner_rectangle_style),
     html.Div([
-        html.Div("Coupling", style=centered_section_style),
+        html.Div("Level", style=centered_section_style),
         dcc.Dropdown(
             id='coupling-dropdown',
-            options=[{'label': 'AC', 'value': 'AC'}, {'label': 'DC', 'value': 'DC'}],
-            value='AC',  # Default value
+            options=[{'label': '1V', 'value': '1V'}, {'label': '5V', 'value': '5V'}],
+            value='1V',  # Default value
+            clearable=False,
             style=dropdown_style
         ),
-        html.Div("Attenuation", style=centered_section_style),
+        html.Div("Condition", style=centered_section_style),
         dcc.Dropdown(
             id='attenuation-dropdown',
-            options=[{'label': '1x', 'value': '1x'}, {'label': '10x', 'value': '10x'}],
-            value='1x',  # Default value
+            options=[{'label': '↑Rising', 'value': 'Rising'}, {'label': '↓Falling', 'value': 'Falling'}],
+            value='Rising',  # Default value
+            clearable=False,
             style=dropdown_style
         ),
         html.Div("Force Trigger", style=centered_section_style),
