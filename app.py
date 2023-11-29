@@ -281,7 +281,7 @@ combined_rectangle_content = html.Div([
 long_rectangle_width = 3 * 100 + 4 * 10  # Three rectangles width plus margins
 
 long_rectangle_style = {
-    'width': f'{long_rectangle_width}px',  # Set the combined width
+    'width': f'{800}px',  # Set the combined width
     'height': '100px',  # Keep the height the same as the original rectangles
     'border': '1px solid black',  # Border style
     'display': 'inline-block',  # Display type to align horizontally
@@ -289,6 +289,14 @@ long_rectangle_style = {
 }
 
 # Long rectangle Scope setup stuff
+
+long_rectangle_style_scope = {
+    'width': f'{700}px',  # Set the combined width
+    'height': '100px',  # Keep the height the same as the original rectangles
+    'border': '1px solid black',  # Border style
+    'display': 'inline-block',  # Display type to align horizontally
+    'margin': '10px'  # Margin around the rectangle
+}
 
 inner_rectangle_style = {
     'border': '2px solid blue',
@@ -399,7 +407,8 @@ row_style = {
 first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
     html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
-    html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style)
+    html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),
+    html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style_scope),  # Another longer rectangle
 ])
 
 # App layout definition including Upload component and Graph component
