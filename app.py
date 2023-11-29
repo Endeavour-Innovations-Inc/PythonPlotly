@@ -240,6 +240,151 @@ rectangle_7_content = html.Div([
     'width': '100%'
 })
 
+# Assuming each rectangle is 100px wide with a 10px margin
+combined_rectangle_width = 2 * 100 + 2 * 10  # Double width plus margins
+
+combined_rectangle_style = {
+    'width': f'{combined_rectangle_width}px',  # Set the combined width
+    'height': '100px',  # Keep the height the same as the original rectangles
+    'border': '1px solid black',  # Border style
+    'display': 'inline-block',  # Display type to align horizontally
+    'margin': '10px'  # Margin around the rectangle
+}
+
+combined_rectangle_content_style = {
+    'textAlign': 'center',  # Center align text
+    'paddingTop': '20px',  # Padding at the top for spacing
+    'height': '100%'  # Ensure it fills the rectangle
+}
+
+dropdown_style = {
+    'width': '80%',  # Width of the dropdown
+    'margin': '0 auto'  # Center the dropdown horizontally
+}
+
+combined_rectangle_content = html.Div([
+    html.Div("Sample Rate", style={'marginBottom': '10px'}),  # Sample Rate text
+    dcc.Dropdown(
+        id='sample-rate-dropdown',
+        options=[
+            {'label': '90 MSPS', 'value': '90MSPS'},
+            {'label': '80 MSPS', 'value': '80MSPS'},
+            {'label': '70 MSPS', 'value': '70MSPS'}
+        ],
+        value='90MSPS',  # Default value
+        style=dropdown_style
+    )
+], style=combined_rectangle_content_style)
+
+# Assuming each rectangle is 100px wide with a 10px margin on each side
+long_rectangle_width = 3 * 100 + 4 * 10  # Three rectangles width plus margins
+
+long_rectangle_style = {
+    'width': f'{long_rectangle_width}px',  # Set the combined width
+    'height': '100px',  # Keep the height the same as the original rectangles
+    'border': '1px solid black',  # Border style
+    'display': 'inline-block',  # Display type to align horizontally
+    'margin': '10px'  # Margin around the rectangle
+}
+
+# Long rectangle Scope setup stuff
+
+inner_rectangle_style = {
+    'border': '2px solid blue',
+    'backgroundColor': 'transparent',
+    'height': '80px',
+    'width': '30%',  # Adjust as needed
+    'display': 'inline-block',
+    'textAlign': 'center',
+    'lineHeight': '80px',  # Align text vertically
+    'float': 'left'  # Align to the left
+}
+
+centered_section_style = {
+    'display': 'inline-block',
+    'margin': '0 10px',  # Spacing around the center section
+    'textAlign': 'center',
+    'verticalAlign': 'middle',
+    'lineHeight': '100px'  # Adjust to align text vertically in the rectangle
+}
+
+dropdown_style = {
+    'width': '100px',  # Width of the dropdown
+    'display': 'inline-block',
+    'verticalAlign': 'middle'
+}
+
+rectangle_4_content = html.Div([
+    html.Div("Scope Setup", style=inner_rectangle_style),
+    html.Div([
+        html.Div("Coupling", style=centered_section_style),
+        dcc.Dropdown(
+            id='coupling-dropdown',
+            options=[
+                {'label': 'AC', 'value': 'AC'},
+                {'label': 'DC', 'value': 'DC'}
+            ],
+            value='AC',  # Default value
+            style=dropdown_style
+        ),
+        html.Div("Attenuation", style=centered_section_style),
+        dcc.Dropdown(
+            id='attenuation-dropdown',
+            options=[
+                {'label': '1x', 'value': '1x'},
+                {'label': '10x', 'value': '10x'}
+            ],
+            value='1x',  # Default value
+            style=dropdown_style
+        )
+    ], style={'display': 'inline-block', 'width': '60%', 'textAlign': 'center'})
+], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
+
+# Trigger setup
+
+toggle_button_style = {
+    'display': 'inline-block',
+    'marginLeft': '10px',
+    'padding': '5px 10px',
+    'backgroundColor': '#ddd',
+    'border': 'none',
+    'cursor': 'pointer'
+}
+
+rectangle_8_content = html.Div([
+    html.Div("Trigger Setup", style=inner_rectangle_style),
+    html.Div([
+        html.Div("Coupling", style=centered_section_style),
+        dcc.Dropdown(
+            id='coupling-dropdown',
+            options=[{'label': 'AC', 'value': 'AC'}, {'label': 'DC', 'value': 'DC'}],
+            value='AC',  # Default value
+            style=dropdown_style
+        ),
+        html.Div("Attenuation", style=centered_section_style),
+        dcc.Dropdown(
+            id='attenuation-dropdown',
+            options=[{'label': '1x', 'value': '1x'}, {'label': '10x', 'value': '10x'}],
+            value='1x',  # Default value
+            style=dropdown_style
+        ),
+        html.Div("Force Trigger", style=centered_section_style),
+        html.Button("Off", id='force-trigger-button', style=toggle_button_style)
+    ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
+], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
+
+@app.callback(
+    Output('force-trigger-button', 'children'),
+    [Input('force-trigger-button', 'n_clicks')],
+    prevent_initial_call=True
+)
+def toggle_force_trigger(n_clicks):
+    if n_clicks % 2 == 0:
+        return "Off"
+    else:
+        return "On"
+
+
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
 app.layout = html.Div([
@@ -248,9 +393,8 @@ app.layout = html.Div([
     # First row of rectangles
     html.Div(style=row_style, children=[
         html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
-        html.Div(id='rectangle-2', style=rectangle_style),
-        html.Div(id='rectangle-3', style=rectangle_style),
-        html.Div(id='rectangle-4', style=rectangle_style)
+        html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),  # Combined rectangle
+        html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style),
     ]),
 
     # Second row of rectangles
@@ -258,7 +402,7 @@ app.layout = html.Div([
         html.Div(id='rectangle-6', children=rectangle_6_content, style=rectangle_style),
         html.Div(id='rectangle-5', children=rectangle_5_content, style=rectangle_style),
         html.Div(id='rectangle-7', children=rectangle_7_content, style=rectangle_style),
-        html.Div(id='rectangle-8', style=rectangle_style)
+        html.Div(id='rectangle-8', children=rectangle_8_content, style=long_rectangle_style),  # Another longer rectangle
     ]),
     
     # Placeholder for the graph with division lines (styled as per your CSS)
