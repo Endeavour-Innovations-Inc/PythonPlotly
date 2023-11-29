@@ -112,11 +112,55 @@ button_style = {
     'margin': '0 auto 10px auto'  # Add margins to center the buttons in the parent container
 }
 
+# Define a style for each rectangle
+rectangle_style = {
+    'width': '100px',  # Width of each rectangle
+    'height': '100px',  # Height of each rectangle
+    'border': '1px solid black',  # Border style
+    'display': 'inline-block',  # Display type to align horizontally
+    'margin': '10px'  # Margin around each rectangle
+}
+
+# Define a style for the container of each row of rectangles
+row_style = {
+    'textAlign': 'center',  # Center align the rectangles
+    'marginBottom': '20px'  # Margin at the bottom of each row
+}
+
+# Updated style for the first rectangle
+rectangle_1_style = {
+    'width': '100px',  # Width of the rectangle
+    'height': '100px',  # Height of the rectangle
+    'border': '1px solid black',  # Border style
+    'display': 'flex',  # Use flexbox for centering
+    'alignItems': 'center',  # Vertical centering
+    'justifyContent': 'center',  # Horizontal centering
+    'margin': '10px',  # Margin around the rectangle
+    'backgroundColor': 'lightblue',  # Light blue background color
+    'color': 'black',  # Black text color
+    'cursor': 'pointer'  # Change cursor to indicate clickability
+}
+
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
 app.layout = html.Div([
 
     # Place new elements here
+    # First row of rectangles
+    html.Div(style=row_style, children=[
+        html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
+        html.Div(id='rectangle-2', style=rectangle_style),
+        html.Div(id='rectangle-3', style=rectangle_style),
+        html.Div(id='rectangle-4', style=rectangle_style)
+    ]),
+
+    # Second row of rectangles
+    html.Div(style=row_style, children=[
+        html.Div(id='rectangle-5', style=rectangle_style),
+        html.Div(id='rectangle-6', style=rectangle_style),
+        html.Div(id='rectangle-7', style=rectangle_style),
+        html.Div(id='rectangle-8', style=rectangle_style)
+    ]),
     
     # Placeholder for the graph with division lines (styled as per your CSS)
     html.Div(id='chartDiv', style=styles['chartDiv'], children=[
