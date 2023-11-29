@@ -271,7 +271,8 @@ combined_rectangle_content = html.Div([
             {'label': '80 MSPS', 'value': '80MSPS'},
             {'label': '70 MSPS', 'value': '70MSPS'}
         ],
-        value='90MSPS',  # Default value
+        value='80MSPS',  # Default value
+        clearable=False,
         style=dropdown_style
     )
 ], style=combined_rectangle_content_style)
@@ -383,7 +384,23 @@ def toggle_force_trigger(n_clicks):
         return "Off"
     else:
         return "On"
+    
+# Row Style
 
+row_style = {
+    'textAlign': 'center',
+    'marginBottom': '20px',
+    'display': 'flex',  # Use flex display for better alignment control
+    'alignItems': 'center',  # Align items vertically in the center
+    'justifyContent': 'flex-start'  # Align items to the start of the row
+}
+
+# First row of rectangles with adjusted layout
+first_row_rectangles = html.Div(style=row_style, children=[
+    html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
+    html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
+    html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style)
+])
 
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
@@ -391,11 +408,7 @@ app.layout = html.Div([
 
     # Place new elements here
     # First row of rectangles
-    html.Div(style=row_style, children=[
-        html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
-        html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),  # Combined rectangle
-        html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style),
-    ]),
+    first_row_rectangles,
 
     # Second row of rectangles
     html.Div(style=row_style, children=[
