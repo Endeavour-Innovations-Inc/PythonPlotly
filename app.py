@@ -141,6 +141,105 @@ rectangle_1_style = {
     'cursor': 'pointer'  # Change cursor to indicate clickability
 }
 
+play_icon_style = {
+    'width': '0',
+    'height': '0',
+    'borderTop': '15px solid transparent',  # Top border
+    'borderBottom': '15px solid transparent',  # Bottom border
+    'borderLeft': '30px solid black',  # Left border forms the triangle, pointing to the right
+    'display': 'inline-block',
+    'marginLeft': '10px',
+    'verticalAlign': 'middle'  # Align vertically in the middle
+}
+
+rectangle_5_content = html.Div([
+    html.Div("Run", style={'display': 'inline-block', 'verticalAlign': 'middle'}),
+    html.Div(style=play_icon_style)  # This div represents the play icon
+], style={
+    'textAlign': 'center',
+    'display': 'flex',
+    'alignItems': 'center',  # Center align items vertically
+    'justifyContent': 'center',  # Center align items horizontally
+    'height': '100%',  # Ensure the container takes the full height of the parent
+})
+
+skip_icon_style = {
+    'position': 'relative',  # Relative positioning to contain the inner rectangle
+    'display': 'inline-block',
+    'marginLeft': '10px',
+    'verticalAlign': 'middle'
+}
+
+triangle_style = {
+    'width': '0',
+    'height': '0',
+    'borderTop': '15px solid transparent',
+    'borderBottom': '15px solid transparent',
+    'borderLeft': '30px solid black',
+    'position': 'absolute',  # Positioned absolutely within the skip icon container
+    'left': '0',
+    'top': '0'
+}
+
+thin_rectangle_style = {
+    'width': '8px',  # Width of the thin rectangle
+    'height': '30px',  # Height should match the height of the triangle
+    'backgroundColor': 'black',
+    'position': 'absolute',  # Positioned absolutely to sit at the tip of the triangle
+    'left': '30px',  # Positioned to the right of the triangle
+    'top': '0'
+}
+
+rectangle_6_content = html.Div([
+    html.Div("Single", style={
+        'display': 'inline-block', 
+        'verticalAlign': 'middle',
+        'marginRight': '10px'  # Add some space between the text and the icon
+    }),
+    html.Div(style={
+        'display': 'inline-block', 
+        'position': 'relative',
+        'verticalAlign': 'middle',
+        'height': '30px',  # Match the height of the triangle and rectangle
+        'width': '40px'  # Adjust the width to contain the triangle and the thin rectangle
+    }, children=[
+        html.Div(style=triangle_style),
+        html.Div(style=thin_rectangle_style)
+    ])
+], style={
+    'textAlign': 'center',
+    'display': 'flex',
+    'alignItems': 'center',
+    'justifyContent': 'center',
+    'height': '100%',
+    'width': '100%'  # Ensure the container takes the full width of the parent
+})
+
+square_icon_style = {
+    'width': '30px',  # Width of the square
+    'height': '30px',  # Height of the square
+    'backgroundColor': 'red',  # Red color for the stop icon
+    'display': 'inline-block',
+    'verticalAlign': 'middle',
+    'marginLeft': '10px'
+}
+
+rectangle_7_content = html.Div([
+    html.Div("Stop", style={
+        'display': 'inline-block', 
+        'verticalAlign': 'middle',
+        'marginRight': '10px'  # Space between the text and the icon
+    }),
+    html.Div(style=square_icon_style)  # This div represents the stop icon
+], style={
+    'textAlign': 'center',
+    'display': 'flex',
+    'alignItems': 'center',
+    'justifyContent': 'center',
+    'height': '100%',
+    'width': '100%'
+})
+
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
 app.layout = html.Div([
@@ -156,9 +255,9 @@ app.layout = html.Div([
 
     # Second row of rectangles
     html.Div(style=row_style, children=[
-        html.Div(id='rectangle-5', style=rectangle_style),
-        html.Div(id='rectangle-6', style=rectangle_style),
-        html.Div(id='rectangle-7', style=rectangle_style),
+        html.Div(id='rectangle-6', children=rectangle_6_content, style=rectangle_style),
+        html.Div(id='rectangle-5', children=rectangle_5_content, style=rectangle_style),
+        html.Div(id='rectangle-7', children=rectangle_7_content, style=rectangle_style),
         html.Div(id='rectangle-8', style=rectangle_style)
     ]),
     
