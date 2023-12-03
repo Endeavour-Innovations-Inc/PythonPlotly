@@ -427,6 +427,7 @@ app.layout = html.Div([
     # Second row of rectangles
     html.Div(style=row_style, children=[
         html.Div(id='rectangle-6', children=rectangle_6_content, style=rectangle_style),
+        html.Div(id='single-boolean-value', children='True', style={'display': 'none'}),
         html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
         html.Div(id='rectangle-5', children=rectangle_5_content, style=rectangle_style),
         html.Div(id='rectangle-7', children=rectangle_7_content, style=rectangle_style),
@@ -572,6 +573,20 @@ def export_data(n_clicks):
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # New UI callbacks for Dash
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# Single Button
+@app.callback(
+    Output('single-boolean-value', 'children'),
+    [Input('rectangle-6', 'n_clicks')],
+    [State('single-boolean-value', 'children')]
+)
+def toggle_single_boolean_value(n_clicks, current_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    new_value = 'False' if current_value == 'True' else 'True'
+    print(f"Single button boolean value changed to {new_value}")  # Log the change
+    return new_value
 
 # Connect to simple scope variable record
 @app.callback(
