@@ -9,8 +9,6 @@ import io
 from flask_cors import CORS
 from dash.exceptions import PreventUpdate
 from flask import send_file
-import xlsxwriter
-import csv
 from scipy.signal import lfilter
 from datetime import datetime
 
@@ -323,6 +321,7 @@ dropdown_style = {
     'verticalAlign': 'middle'
 }
 
+# Needs more options for selection
 rectangle_4_content = html.Div([
     html.Div("Scope Setup", style=inner_rectangle_style),
     html.Div([
@@ -362,6 +361,7 @@ toggle_button_style = {
     'cursor': 'pointer'
 }
 
+# Coupling need to specify more available options
 rectangle_8_content = html.Div([
     html.Div("Trigger Setup", style=inner_rectangle_style),
     html.Div([
@@ -410,6 +410,7 @@ row_style = {
 # First row of rectangles with adjusted layout
 first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
+    html.Div(id='boolean-value', children='True', style={'display': 'none'}),
     html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
     html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),
     html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style_scope),  # Another longer rectangle
@@ -426,6 +427,7 @@ app.layout = html.Div([
     # Second row of rectangles
     html.Div(style=row_style, children=[
         html.Div(id='rectangle-6', children=rectangle_6_content, style=rectangle_style),
+        html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
         html.Div(id='rectangle-5', children=rectangle_5_content, style=rectangle_style),
         html.Div(id='rectangle-7', children=rectangle_7_content, style=rectangle_style),
         html.Div(id='rectangle-8', children=rectangle_8_content, style=long_rectangle_style),  # Another longer rectangle
@@ -567,7 +569,25 @@ def export_data(n_clicks):
     # Trigger download
     return dcc.send_data_frame(df.to_csv, "data.csv", index=False)
 
-# Callback to toggle the "Normal" button label
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# New UI callbacks for Dash
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# Connect to simple scope variable record
+@app.callback(
+    Output('boolean-value', 'children'),
+    [Input('rectangle-1', 'n_clicks')],
+    [State('boolean-value', 'children')]
+)
+def toggle_boolean_value(n_clicks, current_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    new_value = 'False' if current_value == 'True' else 'True'
+    print(f"Boolean value changed to {new_value}")  # Log the change
+    return new_value
+
+# Confirmed tracking of the variable
 @app.callback(
     Output('normal-button', 'children'),
     [Input('normal-button', 'n_clicks')],
@@ -575,10 +595,9 @@ def export_data(n_clicks):
     prevent_initial_call=True
 )
 def toggle_normal_button(n_clicks, current_label):
-    if current_label == 'Normal':
-        return 'FFT'
-    else:
-        return 'Normal'
+    new_label = 'FFT' if current_label == 'Normal' else 'Normal'
+    print(f"Normal button label changed to {new_label}")  # Log the change
+    return new_label
 
 if __name__ == '__main__':
     app.run_server(debug=True)
