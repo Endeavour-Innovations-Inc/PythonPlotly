@@ -430,7 +430,9 @@ app.layout = html.Div([
         html.Div(id='single-boolean-value', children='True', style={'display': 'none'}),
         html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
         html.Div(id='rectangle-5', children=rectangle_5_content, style=rectangle_style),
+        html.Div(id='run-boolean-value', children='True', style={'display': 'none'}),
         html.Div(id='rectangle-7', children=rectangle_7_content, style=rectangle_style),
+        html.Div(id='stop-boolean-value', children='True', style={'display': 'none'}),
         html.Div(id='rectangle-8', children=rectangle_8_content, style=long_rectangle_style),  # Another longer rectangle
     ]),
     
@@ -587,6 +589,35 @@ def toggle_single_boolean_value(n_clicks, current_value):
     new_value = 'False' if current_value == 'True' else 'True'
     print(f"Single button boolean value changed to {new_value}")  # Log the change
     return new_value
+
+# Run Button
+@app.callback(
+    Output('run-boolean-value', 'children'),
+    [Input('rectangle-5', 'n_clicks')],
+    [State('run-boolean-value', 'children')]
+)
+def toggle_run_boolean_value(n_clicks, current_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    new_value = 'False' if current_value == 'True' else 'True'
+    print(f"Run button boolean value changed to {new_value}")  # Log the change
+    return new_value
+
+# Stop Button
+@app.callback(
+    Output('stop-boolean-value', 'children'),
+    [Input('rectangle-7', 'n_clicks')],
+    [State('stop-boolean-value', 'children')]
+)
+def toggle_stop_boolean_value(n_clicks, current_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    new_value = 'False' if current_value == 'True' else 'True'
+    print(f"Stop button boolean value changed to {new_value}")  # Log the change
+    return new_value
+
 
 # Connect to simple scope variable record
 @app.callback(
