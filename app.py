@@ -375,6 +375,7 @@ rectangle_8_content = html.Div([
             clearable=False,
             style=dropdown_style
         ),
+        html.Div(id='dummy-output-level', style={'display': 'none'}),
         html.Div("Condition", style=centered_section_style),
         dcc.Dropdown(
             id='condition-dropdown',
@@ -383,6 +384,7 @@ rectangle_8_content = html.Div([
             clearable=False,
             style=dropdown_style
         ),
+        html.Div(id='dummy-output-condition', style={'display': 'none'}),
         html.Div("Force Trigger", style=centered_section_style),
         html.Button("Off", id='force-trigger-button', style=toggle_button_style)
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
@@ -601,7 +603,6 @@ def log_attenuation_change(new_value):
     print(f"Attenuation changed to {new_value}")
     return ""  # Dummy output, not used
 
-
 # Sample Rate
 @app.callback(
     Output('dummy-output-sample-rate', 'children'),
@@ -611,7 +612,6 @@ def log_attenuation_change(new_value):
 def log_sample_rate_change(new_value):
     print(f"Sample rate changed to {new_value}")
     return ""  # Dummy output, not used
-
 
 # Single Button
 @app.callback(
@@ -654,6 +654,26 @@ def toggle_stop_boolean_value(n_clicks, current_value):
     new_value = 'False' if current_value == 'True' else 'True'
     print(f"Stop button boolean value changed to {new_value}")  # Log the change
     return new_value
+
+# Level Selection:
+@app.callback(
+    Output('dummy-output-level', 'children'),
+    [Input('level-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def log_level_change(new_value):
+    print(f"Level changed to {new_value}")
+    return ""  # Dummy output, not used
+
+# Condition DropDown
+@app.callback(
+    Output('dummy-output-condition', 'children'),
+    [Input('condition-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def log_condition_change(new_value):
+    print(f"Condition changed to {new_value}")
+    return ""  # Dummy output, not used
 
 
 # Connect to simple scope variable record
