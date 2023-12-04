@@ -386,7 +386,8 @@ rectangle_8_content = html.Div([
         ),
         html.Div(id='dummy-output-condition', style={'display': 'none'}),
         html.Div("Force Trigger", style=centered_section_style),
-        html.Button("Off", id='force-trigger-button', style=toggle_button_style)
+        html.Button("Off", id='force-trigger-button', style=toggle_button_style),
+        html.Div(id='dummy-output-force-trigger', style={'display': 'none'}),
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
 
@@ -675,6 +676,17 @@ def log_condition_change(new_value):
     print(f"Condition changed to {new_value}")
     return ""  # Dummy output, not used
 
+# Force trigger
+@app.callback(
+    Output('dummy-output-force-trigger', 'children'),
+    [Input('force-trigger-button', 'n_clicks')],
+    [State('dummy-output-force-trigger', 'children')],
+    prevent_initial_call=True
+)
+def toggle_force_trigger_button(n_clicks, current_state):
+    new_state = 'On' if current_state == 'Off' else 'Off'
+    print(f"Force Trigger state changed to {new_state}")  # Log the change
+    return new_state
 
 # Connect to simple scope variable record
 @app.callback(
@@ -689,6 +701,9 @@ def toggle_boolean_value(n_clicks, current_value):
     new_value = 'False' if current_value == 'True' else 'True'
     print(f"Boolean value changed to {new_value}")  # Log the change
     return new_value
+
+
+
 
 # Confirmed tracking of the variable
 @app.callback(
