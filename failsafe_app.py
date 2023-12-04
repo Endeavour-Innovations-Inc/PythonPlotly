@@ -18,7 +18,7 @@ server = Flask(__name__)
 CORS(server)
 app = dash.Dash(__name__, server=server, routes_pathname_prefix='/dash/')
 
-# Define initial empty trace and layout for the graph
+# Plotly init
 initial_trace = go.Scatter(x=[], y=[], mode='lines')
 layout = go.Layout(
     title="Input Signal",
@@ -27,60 +27,13 @@ layout = go.Layout(
     autosize=True
 )
 
-# Style Definitions
+# !!!!!!!!!!!!!!!
+# Rectangles
+# !!!!!!!!!!!!!!!
 
-rectangle_5_content = html.Div([
-    html.Div("Run", style={'display': 'inline-block', 'verticalAlign': 'middle'}),
-    html.Div(style=play_icon_style)  # This div represents the play icon
-], style={
-    'textAlign': 'center',
-    'display': 'flex',
-    'alignItems': 'center',  # Center align items vertically
-    'justifyContent': 'center',  # Center align items horizontally
-    'height': '100%',  # Ensure the container takes the full height of the parent
-})
+# Rectangle 1 is defined in styles
 
-rectangle_6_content = html.Div([
-    html.Div("Single", style={
-        'display': 'inline-block', 
-        'verticalAlign': 'middle',
-        'marginRight': '10px'  # Add some space between the text and the icon
-    }),
-    html.Div(style={
-        'display': 'inline-block', 
-        'position': 'relative',
-        'verticalAlign': 'middle',
-        'height': '30px',  # Match the height of the triangle and rectangle
-        'width': '40px'  # Adjust the width to contain the triangle and the thin rectangle
-    }, children=[
-        html.Div(style=triangle_style),
-        html.Div(style=thin_rectangle_style)
-    ])
-], style={
-    'textAlign': 'center',
-    'display': 'flex',
-    'alignItems': 'center',
-    'justifyContent': 'center',
-    'height': '100%',
-    'width': '100%'  # Ensure the container takes the full width of the parent
-})
-
-rectangle_7_content = html.Div([
-    html.Div("Stop", style={
-        'display': 'inline-block', 
-        'verticalAlign': 'middle',
-        'marginRight': '10px'  # Space between the text and the icon
-    }),
-    html.Div(style=square_icon_style)  # This div represents the stop icon
-], style={
-    'textAlign': 'center',
-    'display': 'flex',
-    'alignItems': 'center',
-    'justifyContent': 'center',
-    'height': '100%',
-    'width': '100%'
-})
-
+# Sample Rate Rectangle
 combined_rectangle_content = html.Div([
     html.Div("Sample Rate", style={'marginBottom': '10px'}),  # Sample Rate text
     dcc.Dropdown(
@@ -96,6 +49,7 @@ combined_rectangle_content = html.Div([
     )
 ], style=combined_rectangle_content_style)
 
+# Coupling/Attenuation rectangle
 # Needs more options for selection
 rectangle_4_content = html.Div([
     html.Div("Scope Setup", style=inner_rectangle_style),
@@ -127,7 +81,62 @@ rectangle_4_content = html.Div([
     ], style={'display': 'inline-block', 'width': '60%', 'textAlign': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
 
-# Coupling need to specify more available options
+#  Single button 
+rectangle_6_content = html.Div([
+    html.Div("Single", style={
+        'display': 'inline-block', 
+        'verticalAlign': 'middle',
+        'marginRight': '10px'  # Add some space between the text and the icon
+    }),
+    html.Div(style={
+        'display': 'inline-block', 
+        'position': 'relative',
+        'verticalAlign': 'middle',
+        'height': '30px',  # Match the height of the triangle and rectangle
+        'width': '40px'  # Adjust the width to contain the triangle and the thin rectangle
+    }, children=[
+        html.Div(style=triangle_style),
+        html.Div(style=thin_rectangle_style)
+    ])
+], style={
+    'textAlign': 'center',
+    'display': 'flex',
+    'alignItems': 'center',
+    'justifyContent': 'center',
+    'height': '100%',
+    'width': '100%'  # Ensure the container takes the full width of the parent
+})
+
+# Run button triangle
+rectangle_5_content = html.Div([
+    html.Div("Run", style={'display': 'inline-block', 'verticalAlign': 'middle'}),
+    html.Div(style=play_icon_style)  # This div represents the play icon
+], style={
+    'textAlign': 'center',
+    'display': 'flex',
+    'alignItems': 'center',  # Center align items vertically
+    'justifyContent': 'center',  # Center align items horizontally
+    'height': '100%',  # Ensure the container takes the full height of the parent
+})
+
+# Stop Button
+rectangle_7_content = html.Div([
+    html.Div("Stop", style={
+        'display': 'inline-block', 
+        'verticalAlign': 'middle',
+        'marginRight': '10px'  # Space between the text and the icon
+    }),
+    html.Div(style=square_icon_style)  # This div represents the stop icon
+], style={
+    'textAlign': 'center',
+    'display': 'flex',
+    'alignItems': 'center',
+    'justifyContent': 'center',
+    'height': '100%',
+    'width': '100%'
+})
+
+# Trigger/Conditions, needs some clarification, also force trigger btn
 rectangle_8_content = html.Div([
     html.Div("Trigger Setup", style=inner_rectangle_style),
     html.Div([
@@ -154,17 +163,6 @@ rectangle_8_content = html.Div([
         html.Div(id='dummy-output-force-trigger', style={'display': 'none'}),
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
-
-@app.callback(
-    Output('force-trigger-button', 'children'),
-    [Input('force-trigger-button', 'n_clicks')],
-    prevent_initial_call=True
-)
-def toggle_force_trigger(n_clicks):
-    if n_clicks % 2 == 0:
-        return "Off"
-    else:
-        return "On"
 
 # First row of rectangles with adjusted layout
 first_row_rectangles = html.Div(style=row_style, children=[
@@ -236,13 +234,22 @@ app.layout = html.Div([
     
     # Component for triggering downloads
     dcc.Download(id='download-dataframe-csv'),
-
-    dcc.Store(id='tracked-data-store', storage_type='memory', data=["Off", "Rising", "1V", "1x", "AC", "80MSPS"])
 ])
 
 # Initialize 'df' as a global variable outside of your callbacks
 global df
 df = pd.DataFrame()
+
+@app.callback(
+    Output('force-trigger-button', 'children'),
+    [Input('force-trigger-button', 'n_clicks')],
+    prevent_initial_call=True
+)
+def toggle_force_trigger(n_clicks):
+    if n_clicks % 2 == 0:
+        return "Off"
+    else:
+        return "On"
 
 # Callback to handle filter toggle button
 @app.callback(
@@ -332,6 +339,30 @@ def export_data(n_clicks):
 # New UI callbacks for Dash
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# "Connect to simple scope" button
+@app.callback(
+    Output('boolean-value', 'children'),
+    [Input('rectangle-1', 'n_clicks')],
+    [State('boolean-value', 'children')]
+)
+def toggle_boolean_value(n_clicks, current_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    new_value = 'False' if current_value == 'True' else 'True'
+    print(f"Boolean value changed to {new_value}")  # Log the change
+    return new_value
+
+# Sample Rate
+@app.callback(
+    Output('dummy-output-sample-rate', 'children'),
+    [Input('sample-rate-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def log_sample_rate_change(new_value):
+    print(f"Sample rate changed to {new_value}")
+    return ""  # Dummy output, not used
+
 # Coupling
 @app.callback(
     Output('dummy-output-coupling', 'children'),
@@ -350,16 +381,6 @@ def log_coupling_change(new_value):
 )
 def log_attenuation_change(new_value):
     print(f"Attenuation changed to {new_value}")
-    return ""  # Dummy output, not used
-
-# Sample Rate
-@app.callback(
-    Output('dummy-output-sample-rate', 'children'),
-    [Input('sample-rate-dropdown', 'value')],
-    prevent_initial_call=True
-)
-def log_sample_rate_change(new_value):
-    print(f"Sample rate changed to {new_value}")
     return ""  # Dummy output, not used
 
 # Single Button
@@ -436,20 +457,7 @@ def toggle_force_trigger_button(n_clicks, current_state):
     print(f"Force Trigger state changed to {new_state}")  # Log the change
     return new_state
 
-# Connect to simple scope variable record
-@app.callback(
-    Output('boolean-value', 'children'),
-    [Input('rectangle-1', 'n_clicks')],
-    [State('boolean-value', 'children')]
-)
-def toggle_boolean_value(n_clicks, current_value):
-    if n_clicks is None:
-        raise PreventUpdate
-    
-    new_value = 'False' if current_value == 'True' else 'True'
-    print(f"Boolean value changed to {new_value}")  # Log the change
-    return new_value
-
+# FTT to Normal Switch
 # Confirmed tracking of the variable
 @app.callback(
     Output('normal-button', 'children'),
