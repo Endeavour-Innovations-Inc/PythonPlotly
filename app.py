@@ -336,6 +336,7 @@ rectangle_4_content = html.Div([
             clearable=False,
             style=dropdown_style
         ),
+        html.Div(id='dummy-output-coupling', style={'display': 'none'}),
         html.Div("Attenuation", style=centered_section_style),
         dcc.Dropdown(
             id='attenuation-dropdown',
@@ -346,7 +347,8 @@ rectangle_4_content = html.Div([
             value='1x',  # Default value
             clearable=False,
             style=dropdown_style
-        )
+        ),
+        html.Div(id='dummy-output-attenuation', style={'display': 'none'}),
     ], style={'display': 'inline-block', 'width': '60%', 'textAlign': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
 
@@ -367,7 +369,7 @@ rectangle_8_content = html.Div([
     html.Div([
         html.Div("Level", style=centered_section_style),
         dcc.Dropdown(
-            id='coupling-dropdown',
+            id='level-dropdown',
             options=[{'label': '1V', 'value': '1V'}, {'label': '5V', 'value': '5V'}],
             value='1V',  # Default value
             clearable=False,
@@ -375,7 +377,7 @@ rectangle_8_content = html.Div([
         ),
         html.Div("Condition", style=centered_section_style),
         dcc.Dropdown(
-            id='attenuation-dropdown',
+            id='condition-dropdown',
             options=[{'label': '↑Rising', 'value': 'Rising'}, {'label': '↓Falling', 'value': 'Falling'}],
             value='Rising',  # Default value
             clearable=False,
@@ -414,7 +416,9 @@ first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
     html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),
     html.Div(id='dummy-output-sample-rate', style={'display': 'none'}),
-    html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style_scope),  # Another longer rectangle
+    html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style_scope),
+    # html.Div(id='dummy-output-coupling', style={'display': 'none'}), # Problematic code begins here
+    # html.Div(id='dummy-output-attenuation', style={'display': 'none'}),
 ])
 
 # App layout definition including Upload component and Graph component
@@ -576,6 +580,27 @@ def export_data(n_clicks):
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # New UI callbacks for Dash
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# Coupling
+@app.callback(
+    Output('dummy-output-coupling', 'children'),
+    [Input('coupling-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def log_coupling_change(new_value):
+    print(f"Coupling changed to {new_value}")
+    return ""  # Dummy output, not used
+
+# Attentuation
+@app.callback(
+    Output('dummy-output-attenuation', 'children'),
+    [Input('attenuation-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def log_attenuation_change(new_value):
+    print(f"Attenuation changed to {new_value}")
+    return ""  # Dummy output, not used
+
 
 # Sample Rate
 @app.callback(
