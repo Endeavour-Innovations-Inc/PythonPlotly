@@ -413,6 +413,7 @@ first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(id='boolean-value', children='True', style={'display': 'none'}),
     html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
     html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),
+    html.Div(id='dummy-output-sample-rate', style={'display': 'none'}),
     html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style_scope),  # Another longer rectangle
 ])
 
@@ -575,6 +576,17 @@ def export_data(n_clicks):
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # New UI callbacks for Dash
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# Sample Rate
+@app.callback(
+    Output('dummy-output-sample-rate', 'children'),
+    [Input('sample-rate-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def log_sample_rate_change(new_value):
+    print(f"Sample rate changed to {new_value}")
+    return ""  # Dummy output, not used
+
 
 # Single Button
 @app.callback(
