@@ -27,18 +27,28 @@ layout = go.Layout(
 )
 
 global_state = {
-    'connect_to_scope': 'Unknown',
+    'connect_to_scope': 0,
     'sample_rate': 'Unknown',
     'coupling': 'Unknown',
     'attenuation': 'Unknown',
-    'single_button': 'Unknown',
-    'run_button': 'Unknown',
-    'stop_button': 'Unknown',
+    'single_button': 0,
+    'run_button': 0,
+    'stop_button': 0,
     'level': 'Unknown',
     'condition': 'Unknown',
     'force_trigger': 'Unknown',
-    'normal_button': 'Unknown'
+    'normal_button': 0
 }
+
+# Arrays to store the values
+# index: variable
+# 0: connect_to_scope
+# 1: single_button
+# 2: run_button
+# 3: stop_button
+# 4: normal_button
+control_buttons_array = [None] * 5  # For the specified control buttons
+# other_state_array = [None] * (len(global_state) - 5)  # For the remaining states
 
 
 # !!!!!!!!!!!!!!!
@@ -181,7 +191,7 @@ rectangle_8_content = html.Div([
 # First row of rectangles with adjusted layout
 first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
-    html.Div(id='boolean-value', children='True', style={'display': 'none'}),
+    html.Div(id='boolean-value', children='False', style={'display': 'none'}),
     html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
     html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),
     html.Div(id='dummy-output-sample-rate', style={'display': 'none'}),
@@ -199,12 +209,12 @@ app.layout = html.Div([
     # Second row of rectangles
     html.Div(style=row_style, children=[
         html.Div(id='rectangle-6', children=rectangle_6_content, style=rectangle_style),
-        html.Div(id='single-boolean-value', children='True', style={'display': 'none'}),
+        html.Div(id='single-boolean-value', children='False', style={'display': 'none'}),
         html.Div(style={'width': '10px', 'display': 'inline-block'}),  # Spacer Div
         html.Div(id='rectangle-5', children=rectangle_5_content, style=rectangle_style),
-        html.Div(id='run-boolean-value', children='True', style={'display': 'none'}),
+        html.Div(id='run-boolean-value', children='False', style={'display': 'none'}),
         html.Div(id='rectangle-7', children=rectangle_7_content, style=rectangle_style),
-        html.Div(id='stop-boolean-value', children='True', style={'display': 'none'}),
+        html.Div(id='stop-boolean-value', children='False', style={'display': 'none'}),
         html.Div(id='rectangle-8', children=rectangle_8_content, style=long_rectangle_style),  # Another longer rectangle
     ]),
     
@@ -369,7 +379,11 @@ def toggle_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
-    global_state['connect_to_scope'] = new_value
+    if new_value == 'False':
+        bit_value = 0
+    if new_value == 'True':
+        bit_value = 1
+    global_state['connect_to_scope'] = bit_value
     print(f"Boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -417,7 +431,11 @@ def toggle_single_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
-    global_state['single_button'] = new_value
+    if new_value == 'False':
+        bit_value = 0
+    if new_value == 'True':
+        bit_value = 1
+    global_state['single_button'] = bit_value
     print(f"Single button boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -432,7 +450,11 @@ def toggle_run_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
-    global_state['run_button'] = new_value
+    if new_value == 'False':
+        bit_value = 0
+    if new_value == 'True':
+        bit_value = 1
+    global_state['run_button'] = bit_value
     print(f"Run button boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -447,7 +469,11 @@ def toggle_stop_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
-    global_state['stop_button'] = new_value
+    if new_value == 'False':
+        bit_value = 0
+    if new_value == 'True':
+        bit_value = 1
+    global_state['stop_button'] = bit_value
     print(f"Stop button boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -496,17 +522,28 @@ def toggle_force_trigger_button(n_clicks, current_state):
 )
 def toggle_normal_button(n_clicks, current_label):
     new_label = 'FFT' if current_label == 'Normal' else 'Normal'
-    global_state['normal_button'] = new_label
+    if new_label == 'Normal':
+        bit_value = 0
+    if new_label == 'FFT':
+        bit_value = 1
+    global_state['normal_button'] = bit_value
     print(f"Normal button label changed to {new_label}")  # Log the change
     return new_label
 
-# Repeated Callback for variable tracking
+# button state tracking
 @app.callback(
     Output('interval-component', 'children'),
     [Input('interval-component', 'n_intervals')]
 )
 def update_every_second(n):
-    print(f"Current state: {global_state}")
+    # Update control_buttons_array based on global_state
+    control_buttons_array[0] = global_state['connect_to_scope']
+    control_buttons_array[1] = global_state['single_button']
+    control_buttons_array[2] = global_state['run_button']
+    control_buttons_array[3] = global_state['stop_button']
+    control_buttons_array[4] = global_state['normal_button']
+
+    print(f"Control Buttons Array: {control_buttons_array}")
     return ""
 
 if __name__ == '__main__':
