@@ -28,15 +28,15 @@ layout = go.Layout(
 
 global_state = {
     'connect_to_scope': 0,
-    'sample_rate': 'Unknown',
-    'coupling': 'Unknown',
-    'attenuation': 'Unknown',
+    'sample_rate': 0.0,
+    'coupling': 0,
+    'attenuation': 0,
     'single_button': 0,
     'run_button': 0,
     'stop_button': 0,
-    'level': 'Unknown',
-    'condition': 'Unknown',
-    'force_trigger': 'Unknown',
+    'level': 0,
+    'condition': 0,
+    'force_trigger': 0,
     'normal_button': 0
 }
 
@@ -48,7 +48,14 @@ global_state = {
 # 3: stop_button
 # 4: normal_button
 control_buttons_array = [None] * 5  # For the specified control buttons
-# other_state_array = [None] * (len(global_state) - 5)  # For the remaining states
+# index: variable
+# 0: force_trigger
+# 1: condition (rise/fall)
+# 2: level (trigger value)
+# 3: attenuation
+# 5: coupling
+# 6: sample_rate
+other_state_array = [None] * 6  # For the remaining states
 
 
 # !!!!!!!!!!!!!!!
@@ -63,11 +70,11 @@ combined_rectangle_content = html.Div([
     dcc.Dropdown(
         id='sample-rate-dropdown',
         options=[
-            {'label': '90 MSPS', 'value': '90MSPS'},
-            {'label': '80 MSPS', 'value': '80MSPS'},
-            {'label': '70 MSPS', 'value': '70MSPS'}
+            {'label': '90 MSPS', 'value': 90},
+            {'label': '80 MSPS', 'value': 80},
+            {'label': '70 MSPS', 'value': 70}
         ],
-        value='80MSPS',  # Default value
+        value=80,  # Default value
         clearable=False,
         style=dropdown_style
     )
@@ -167,8 +174,9 @@ rectangle_8_content = html.Div([
         html.Div("Level", style=centered_section_style),
         dcc.Dropdown(
             id='level-dropdown',
-            options=[{'label': '1V', 'value': '1V'}, {'label': '5V', 'value': '5V'}],
-            value='1V',  # Default value
+            options=[{'label': '1V', 'value': 1}, 
+                     {'label': '5V', 'value': 5}],
+            value=1,  # Default value
             clearable=False,
             style=dropdown_style
         ),
@@ -176,14 +184,15 @@ rectangle_8_content = html.Div([
         html.Div("Condition", style=centered_section_style),
         dcc.Dropdown(
             id='condition-dropdown',
-            options=[{'label': '↑Rising', 'value': 'Rising'}, {'label': '↓Falling', 'value': 'Falling'}],
+            options=[{'label': '↑Rising', 'value': 'Rising'}, 
+                     {'label': '↓Falling', 'value': 'Falling'}],
             value='Rising',  # Default value
             clearable=False,
             style=dropdown_style
         ),
         html.Div(id='dummy-output-condition', style={'display': 'none'}),
         html.Div("Force Trigger", style=centered_section_style),
-        html.Button("Off", id='force-trigger-button', style=toggle_button_style),
+        html.Button("On", id='force-trigger-button', style=toggle_button_style),
         html.Div(id='dummy-output-force-trigger', style={'display': 'none'}),
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
@@ -269,6 +278,7 @@ app.layout = html.Div([
 global df
 df = pd.DataFrame()
 
+# I think this is the force trigger button
 @app.callback(
     Output('force-trigger-button', 'children'),
     [Input('force-trigger-button', 'n_clicks')],
@@ -405,7 +415,11 @@ def log_sample_rate_change(new_value):
     prevent_initial_call=True
 )
 def log_coupling_change(new_value):
-    global_state['coupling'] = new_value
+    if new_value == 'AC':
+        bit_value = 0
+    if new_value == 'DC':
+        bit_value = 1
+    global_state['coupling'] = bit_value
     print(f"Coupling changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -416,7 +430,11 @@ def log_coupling_change(new_value):
     prevent_initial_call=True
 )
 def log_attenuation_change(new_value):
-    global_state['attenuation'] = new_value
+    if new_value == '1x':
+        bit_value = 0
+    if new_value == '10x':
+        bit_value = 1
+    global_state['attenuation'] = bit_value
     print(f"Attenuation changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -495,7 +513,11 @@ def log_level_change(new_value):
     prevent_initial_call=True
 )
 def log_condition_change(new_value):
-    global_state['condition'] = new_value
+    if new_value == 'Rising':
+        bit_value = 0
+    if new_value == 'Falling':
+        bit_value = 1
+    global_state['condition'] = bit_value
     print(f"Condition changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -508,7 +530,11 @@ def log_condition_change(new_value):
 )
 def toggle_force_trigger_button(n_clicks, current_state):
     new_state = 'On' if current_state == 'Off' else 'Off'
-    global_state['force_trigger'] = new_state
+    if new_state == 'Off':
+        bit_value = 0
+    if new_state == 'On':
+        bit_value = 1
+    global_state['force_trigger'] = bit_value
     print(f"Force Trigger state changed to {new_state}")  # Log the change
     return new_state
 
@@ -543,7 +569,16 @@ def update_every_second(n):
     control_buttons_array[3] = global_state['stop_button']
     control_buttons_array[4] = global_state['normal_button']
 
+    # Synchronize other_state_array with global_state
+    other_state_array[0] = global_state['force_trigger']
+    other_state_array[1] = global_state['condition']
+    other_state_array[2] = global_state['level']
+    other_state_array[3] = global_state['attenuation']
+    other_state_array[4] = global_state['coupling']
+    other_state_array[5] = global_state['sample_rate']
+
     print(f"Control Buttons Array: {control_buttons_array}")
+    print(f"Other States Array: {other_state_array}")
     return ""
 
 if __name__ == '__main__':
