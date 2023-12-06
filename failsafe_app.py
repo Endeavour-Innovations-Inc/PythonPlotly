@@ -28,13 +28,13 @@ layout = go.Layout(
 
 global_state = {
     'connect_to_scope': 0,
-    'sample_rate': 0.0,
+    'sample_rate': 80,
     'coupling': 0,
     'attenuation': 0,
     'single_button': 0,
     'run_button': 0,
     'stop_button': 0,
-    'level': 0,
+    'level': 1,
     'condition': 0,
     'force_trigger': 0,
     'normal_button': 0
