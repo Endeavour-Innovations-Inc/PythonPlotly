@@ -13,7 +13,6 @@ from scipy.signal import lfilter
 from datetime import datetime
 from style import styles, play_icon_style, rectangle_1_style, rectangle_style, triangle_style, thin_rectangle_style, square_icon_style, dropdown_style, combined_rectangle_content_style, combined_rectangle_style, inner_rectangle_style, centered_section_style, long_rectangle_style_scope, long_rectangle_style, row_style, toggle_button_style
 
-
 server = Flask(__name__)
 CORS(server)
 app = dash.Dash(__name__, server=server, routes_pathname_prefix='/dash/')
@@ -26,6 +25,21 @@ layout = go.Layout(
     yaxis=dict(title='Amplitude (V)'),
     autosize=True
 )
+
+global_state = {
+    'connect_to_scope': 'Unknown',
+    'sample_rate': 'Unknown',
+    'coupling': 'Unknown',
+    'attenuation': 'Unknown',
+    'single_button': 'Unknown',
+    'run_button': 'Unknown',
+    'stop_button': 'Unknown',
+    'level': 'Unknown',
+    'condition': 'Unknown',
+    'force_trigger': 'Unknown',
+    'normal_button': 'Unknown'
+}
+
 
 # !!!!!!!!!!!!!!!
 # Rectangles
@@ -234,6 +248,11 @@ app.layout = html.Div([
     
     # Component for triggering downloads
     dcc.Download(id='download-dataframe-csv'),
+    dcc.Interval(id='interval-component',
+    interval=1*1000,  # in milliseconds
+    n_intervals=0
+)
+
 ])
 
 # Initialize 'df' as a global variable outside of your callbacks
@@ -350,6 +369,7 @@ def toggle_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
+    global_state['connect_to_scope'] = new_value
     print(f"Boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -360,6 +380,7 @@ def toggle_boolean_value(n_clicks, current_value):
     prevent_initial_call=True
 )
 def log_sample_rate_change(new_value):
+    global_state['sample_rate'] = new_value
     print(f"Sample rate changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -370,6 +391,7 @@ def log_sample_rate_change(new_value):
     prevent_initial_call=True
 )
 def log_coupling_change(new_value):
+    global_state['coupling'] = new_value
     print(f"Coupling changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -380,6 +402,7 @@ def log_coupling_change(new_value):
     prevent_initial_call=True
 )
 def log_attenuation_change(new_value):
+    global_state['attenuation'] = new_value
     print(f"Attenuation changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -394,6 +417,7 @@ def toggle_single_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
+    global_state['single_button'] = new_value
     print(f"Single button boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -408,6 +432,7 @@ def toggle_run_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
+    global_state['run_button'] = new_value
     print(f"Run button boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -422,6 +447,7 @@ def toggle_stop_boolean_value(n_clicks, current_value):
         raise PreventUpdate
     
     new_value = 'False' if current_value == 'True' else 'True'
+    global_state['stop_button'] = new_value
     print(f"Stop button boolean value changed to {new_value}")  # Log the change
     return new_value
 
@@ -432,6 +458,7 @@ def toggle_stop_boolean_value(n_clicks, current_value):
     prevent_initial_call=True
 )
 def log_level_change(new_value):
+    global_state['level'] = new_value
     print(f"Level changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -442,6 +469,7 @@ def log_level_change(new_value):
     prevent_initial_call=True
 )
 def log_condition_change(new_value):
+    global_state['condition'] = new_value
     print(f"Condition changed to {new_value}")
     return ""  # Dummy output, not used
 
@@ -454,6 +482,7 @@ def log_condition_change(new_value):
 )
 def toggle_force_trigger_button(n_clicks, current_state):
     new_state = 'On' if current_state == 'Off' else 'Off'
+    global_state['force_trigger'] = new_state
     print(f"Force Trigger state changed to {new_state}")  # Log the change
     return new_state
 
@@ -467,8 +496,18 @@ def toggle_force_trigger_button(n_clicks, current_state):
 )
 def toggle_normal_button(n_clicks, current_label):
     new_label = 'FFT' if current_label == 'Normal' else 'Normal'
+    global_state['normal_button'] = new_label
     print(f"Normal button label changed to {new_label}")  # Log the change
     return new_label
+
+# Repeated Callback for variable tracking
+@app.callback(
+    Output('interval-component', 'children'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_every_second(n):
+    print(f"Current state: {global_state}")
+    return ""
 
 if __name__ == '__main__':
     app.run_server(debug=True)
