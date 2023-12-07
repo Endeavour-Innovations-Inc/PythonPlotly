@@ -12,6 +12,8 @@ from flask import send_file
 from scipy.signal import lfilter
 from datetime import datetime
 
+import scope_interface as si
+import time
 
 server = Flask(__name__)
 CORS(server)
@@ -379,7 +381,7 @@ rectangle_8_content = html.Div([
         html.Div("Condition", style=centered_section_style),
         dcc.Dropdown(
             id='condition-dropdown',
-            options=[{'label': '↑Rising', 'value': 'Rising'}, {'label': '↓Falling', 'value': 'Falling'}],
+            options=[{'label': '↑ Rising', 'value': 'Rising'}, {'label': '↓ Falling', 'value': 'Falling'}],
             value='Rising',  # Default value
             clearable=False,
             style=dropdown_style
@@ -427,7 +429,6 @@ first_row_rectangles = html.Div(style=row_style, children=[
 # App layout definition including Upload component and Graph component
 # Define the layout of your app
 app.layout = html.Div([
-
     # Place new elements here
     # First row of rectangles
     first_row_rectangles,
@@ -511,13 +512,12 @@ def toggle_filter(n_clicks):
 # Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
     Output('my-graph', 'figure'),
-    [Input('upload-data', 'contents'),
-     Input('upload-data', 'filename'),  # Change the input to filename
+    [Input('interval-component', 'n_intervals'),
      Input('reset-button', 'n_clicks')],
     [State('filter-toggle', 'children')],  # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(contents, filename, reset_clicks, filter_toggle_label):
+def update_graph(reset_clicks, filter_toggle_label):
     global df 
     ctx = dash.callback_context
 
@@ -530,7 +530,7 @@ def update_graph(contents, filename, reset_clicks, filter_toggle_label):
         return {'data': [initial_trace], 'layout': layout}
 
     # If new file data is uploaded, update the graph
-    if triggered_id == 'upload-data' and contents:
+    if interval:
         # Generate a timestamp to force the update
         timestamp = datetime.now()
         
@@ -694,6 +694,10 @@ def toggle_force_trigger_button(n_clicks, current_state):
     [Input('rectangle-1', 'n_clicks')],
     [State('boolean-value', 'children')]
 )
+def connect_do_device(n_clicks, current_value):
+    si.program_scope()
+    time.sleep(1)
+    si.connect_to_scope()
 def toggle_boolean_value(n_clicks, current_value):
     if n_clicks is None:
         raise PreventUpdate

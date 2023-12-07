@@ -13,9 +13,61 @@ from scipy.signal import lfilter
 from datetime import datetime
 from style import styles, play_icon_style, rectangle_1_style, rectangle_style, triangle_style, thin_rectangle_style, square_icon_style, dropdown_style, combined_rectangle_content_style, combined_rectangle_style, inner_rectangle_style, centered_section_style, long_rectangle_style_scope, long_rectangle_style, row_style, toggle_button_style
 
+import scope_interface as si
+import numpy as np 
+import time 
+
 server = Flask(__name__)
 CORS(server)
 app = dash.Dash(__name__, server=server, routes_pathname_prefix='/dash/')
+
+def run():
+    global df
+    force = other_state_array[0]
+    trig = other_state_array[2]
+    trig_bin = "{0:012b}".format(int(trig*1000))
+    trig_low = int(trig_bin[4:12], 2)
+    trig_hi = int(trig_bin[0:4], 2)
+
+    rise = other_state_array[1]
+
+    print('Use Trigger: ' + str(force))
+
+    atten = other_state_array[3]
+    coupl = other_state_array[4]
+
+    trig_condition = "".join([str(rise), str(force)])
+
+    configs = [1, int(trig_condition, 2), trig_low, trig_hi, atten, coupl]
+    #configs = [1, 2, 3, 4, 5, 6]
+    print('Configs are: ' + str(configs))
+
+    try:
+        si.configure_scope(configs)
+        print('Device Configured!')
+    except usb.core.USBError:
+        print('Device Not Ready')
+        pass
+
+    v_data = []
+    t_data = []
+
+    data_ready = None
+    try:
+        data_ready = si.check_for_data()
+    except usb.core.USBError:
+        print('Data Not Ready')
+
+    print('Interrupt Received From Device - Requesting Data...')
+
+    v_data = si.get_samples()
+    t_data = np.arange(0, len(v_data), 1)
+
+    d = {'t': t_data, 'data': v_data}
+    df = pd.DataFrame(d)
+
+    print(len(v_data))
+    #print(df)
 
 # Plotly init
 initial_trace = go.Scatter(x=[], y=[], mode='lines')
@@ -70,9 +122,11 @@ combined_rectangle_content = html.Div([
     dcc.Dropdown(
         id='sample-rate-dropdown',
         options=[
-            {'label': '90 MSPS', 'value': 90},
             {'label': '80 MSPS', 'value': 80},
-            {'label': '70 MSPS', 'value': 70}
+            {'label': '70 MSPS', 'value': 70},
+            {'label': '60 MSPS', 'value': 60},
+            {'label': '50 MSPS', 'value': 50},
+            {'label': '40 MSPS', 'value': 40},
         ],
         value=80,  # Default value
         clearable=False,
@@ -268,7 +322,7 @@ app.layout = html.Div([
     # Component for triggering downloads
     dcc.Download(id='download-dataframe-csv'),
     dcc.Interval(id='interval-component',
-    interval=1*1000,  # in milliseconds
+    interval=5*1000,  # in milliseconds
     n_intervals=0
 )
 
@@ -276,7 +330,8 @@ app.layout = html.Div([
 
 # Initialize 'df' as a global variable outside of your callbacks
 global df
-df = pd.DataFrame()
+d = {'t': [], 'data': []}
+df = pd.DataFrame(d)
 
 # I think this is the force trigger button
 @app.callback(
@@ -305,33 +360,30 @@ def toggle_filter(n_clicks):
 # Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
     Output('my-graph', 'figure'),
-    [Input('upload-data', 'contents'),
-     Input('upload-data', 'filename'),  # Change the input to filename
-     Input('reset-button', 'n_clicks')],
-    [State('filter-toggle', 'children')],  # Add the switch's value as State
+    [Input('interval-component', 'n_intervals')],
+  # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(contents, filename, reset_clicks, filter_toggle_label):
+def update_graph(refresh):
     global df 
     ctx = dash.callback_context
 
     # Determine which input was triggered
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
+    """
     # If the reset button is clicked, clear the graph
     if triggered_id == 'reset-button':
         df = pd.DataFrame()  # Reset the 'df' variable
         return {'data': [initial_trace], 'layout': layout}
+    """
 
     # If new file data is uploaded, update the graph
-    if triggered_id == 'upload-data' and contents:
+    if triggered_id == 'interval-component':
         # Generate a timestamp to force the update
         timestamp = datetime.now()
         
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        
+        """
         # Check if the filter switch is enabled and apply the filter
         if 'On' in filter_toggle_label:
             # Define filter coefficients here for smoothing
@@ -340,7 +392,8 @@ def update_graph(contents, filename, reset_clicks, filter_toggle_label):
             filtered_data = lfilter(b, a, df['data'])
             trace = go.Scatter(x=df['t'], y=filtered_data, mode='lines', name='Filtered Data')
         else:
-            trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
+        """   
+        trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
 
         return {'data': [trace], 'layout': layout}
 
@@ -387,8 +440,21 @@ def export_data(n_clicks):
 def toggle_boolean_value(n_clicks, current_value):
     if n_clicks is None:
         raise PreventUpdate
+    new_value = current_value
+
+    si.program_scope()
+    time.sleep(1)
+    try:
+        si.connect_to_scope()
+    except ValueError:
+        print('error encountered')
+        new_value = 'False'
+        print(f"Boolean value changed to {new_value}")  # Log the change
+        bit_value = 0
+        global_state['connect_to_scope'] = bit_value
+        return new_value
     
-    new_value = 'False' if current_value == 'True' else 'True'
+    new_value = 'True'
     if new_value == 'False':
         bit_value = 0
     if new_value == 'True':
@@ -448,7 +514,10 @@ def toggle_single_boolean_value(n_clicks, current_value):
     if n_clicks is None:
         raise PreventUpdate
     
-    new_value = 'False' if current_value == 'True' else 'True'
+    run_stat = control_buttons_array[2]
+    if run_stat == 0:
+        run()
+    new_value = 'False'
     if new_value == 'False':
         bit_value = 0
     if new_value == 'True':
@@ -460,14 +529,27 @@ def toggle_single_boolean_value(n_clicks, current_value):
 # Run Button
 @app.callback(
     Output('run-boolean-value', 'children'),
-    [Input('rectangle-5', 'n_clicks')],
+    [Input('rectangle-5', 'n_clicks'),
+    Input('rectangle-7', 'n_clicks')],
     [State('run-boolean-value', 'children')]
 )
-def toggle_run_boolean_value(n_clicks, current_value):
+def toggle_run_boolean_value(n_clicks, stop, current_value):
     if n_clicks is None:
+        new_value = 'False'
+        return new_value
         raise PreventUpdate
     
-    new_value = 'False' if current_value == 'True' else 'True'
+    ctx = dash.callback_context
+    # Determine which input was triggered
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    new_value = 'False'
+
+    if triggered_id == 'rectangle-7':
+        new_value = 'False'
+    else:
+        new_value = 'True'
+
     if new_value == 'False':
         bit_value = 0
     if new_value == 'True':
@@ -547,10 +629,10 @@ def toggle_force_trigger_button(n_clicks, current_state):
     prevent_initial_call=True
 )
 def toggle_normal_button(n_clicks, current_label):
-    new_label = 'FFT' if current_label == 'Normal' else 'Normal'
+    new_label = 'Filter' if current_label == 'Normal' else 'Normal'
     if new_label == 'Normal':
         bit_value = 0
-    if new_label == 'FFT':
+    if new_label == 'Filter':
         bit_value = 1
     global_state['normal_button'] = bit_value
     print(f"Normal button label changed to {new_label}")  # Log the change
