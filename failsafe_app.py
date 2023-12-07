@@ -322,7 +322,7 @@ app.layout = html.Div([
     # Component for triggering downloads
     dcc.Download(id='download-dataframe-csv'),
     dcc.Interval(id='interval-component',
-    interval=5*1000,  # in milliseconds
+    interval=1*1000,  # in milliseconds
     n_intervals=0
 )
 
@@ -382,6 +382,8 @@ def update_graph(refresh):
     if triggered_id == 'interval-component':
         # Generate a timestamp to force the update
         timestamp = datetime.now()
+        if control_buttons_array[2] == 1:
+            run()
         
         """
         # Check if the filter switch is enabled and apply the filter
@@ -659,8 +661,8 @@ def update_every_second(n):
     other_state_array[4] = global_state['coupling']
     other_state_array[5] = global_state['sample_rate']
 
-    print(f"Control Buttons Array: {control_buttons_array}")
-    print(f"Other States Array: {other_state_array}")
+    #print(f"Control Buttons Array: {control_buttons_array}")
+    #print(f"Other States Array: {other_state_array}")
     return ""
 
 if __name__ == '__main__':
