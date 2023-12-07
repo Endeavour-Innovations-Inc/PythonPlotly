@@ -33,7 +33,9 @@ backend = usb.backend.libusb1.get_backend(find_library=lambda x: "./libusb-1.0.d
 #connects to Simple Scope
 def connect_to_scope():
 
+
     global dev
+
     dev = usb.core.find(backend=backend)
     dev = usb.core.find(idVendor=0x1FC9, idProduct=0x008A) #idProduct=0x008A for programmed device
 
@@ -60,16 +62,17 @@ def get_samples():
     
     index_buff = dev.read(0x81, 0x40, 1000)
     index = "".join([to_bin(index_buff[3]), to_bin(index_buff[2]), to_bin(index_buff[1]), to_bin(index_buff[0])])
-    #index = "".join([to_bin(index_buff[0]), to_bin(index_buff[1]), to_bin(index_buff[2]), to_bin(index_buff[3])])  #uncomment line if order is backwards
-    #print(index_buff)
-    #print(index)
+
+    trig_buff = dev.read(0x81, 0x40, 1000)
+    trigger = "".join([to_bin(trig_buff[3]), to_bin(trig_buff[2]), to_bin(trig_buff[1]), to_bin(trig_buff[0])])
+    #print(trigger)
+    #print(int(trigger, 2))
     
     samples = []
     sample_temp = []
     samples_bin = []
     for i in range(1792):
         data = dev.read(0x81, 0x40, 1000)
-        #print(str(i) + " " + str(data))
         sample_temp.extend(data)
 
     datasize = len(sample_temp)
@@ -82,7 +85,7 @@ def get_samples():
         samples_bin.append(sample_12b)
 
         point = twos_comp(int(sample_12b,2), len(sample_12b))
-        samples.append(point)
+        samples.append(float(point)/2048)
 
         #print(samples_bin)
 

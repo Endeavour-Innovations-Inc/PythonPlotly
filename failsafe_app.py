@@ -16,6 +16,7 @@ from style import styles, play_icon_style, rectangle_1_style, rectangle_style, t
 import scope_interface as si
 import numpy as np 
 import time 
+from scipy import signal
 
 server = Flask(__name__)
 CORS(server)
@@ -42,32 +43,36 @@ def run():
     #configs = [1, 2, 3, 4, 5, 6]
     print('Configs are: ' + str(configs))
 
-    try:
-        si.configure_scope(configs)
-        print('Device Configured!')
-    except usb.core.USBError:
-        print('Device Not Ready')
-        pass
+    if control_buttons_array[0] == 0:
+        raise ValueError('Simple Scope is not connected!')
+        print('Simple Scope is not connected!')
+    else:
+        try:
+            si.configure_scope(configs)
+            print('Device Configured!')
+        except usb.core.USBError:
+            print('Device Not Ready')
+            pass
 
-    v_data = []
-    t_data = []
+        v_data = []
+        t_data = []
 
-    data_ready = None
-    try:
-        data_ready = si.check_for_data()
-    except usb.core.USBError:
-        print('Data Not Ready')
+        data_ready = None
+        try:
+            data_ready = si.check_for_data()
+        except usb.core.USBError:
+            print('Data Not Ready')
 
-    print('Interrupt Received From Device - Requesting Data...')
+        print('Interrupt Received From Device - Requesting Data...')
 
-    v_data = si.get_samples()
-    t_data = np.arange(0, len(v_data), 1)
+        v_data = si.get_samples()
+        t_data = np.arange(0, len(v_data), 1)
 
-    d = {'t': t_data, 'data': v_data}
-    df = pd.DataFrame(d)
+        d = {'t': t_data, 'data': v_data}
+        df = pd.DataFrame(d)
 
-    print(len(v_data))
-    #print(df)
+        print(len(v_data))
+        #print(df)
 
 # Plotly init
 initial_trace = go.Scatter(x=[], y=[], mode='lines')
@@ -98,7 +103,7 @@ global_state = {
 # 1: single_button
 # 2: run_button
 # 3: stop_button
-# 4: normal_button
+# 4: filter_button
 control_buttons_array = [None] * 5  # For the specified control buttons
 # index: variable
 # 0: force_trigger
@@ -246,7 +251,7 @@ rectangle_8_content = html.Div([
         ),
         html.Div(id='dummy-output-condition', style={'display': 'none'}),
         html.Div("Force Trigger", style=centered_section_style),
-        html.Button("On", id='force-trigger-button', style=toggle_button_style),
+        html.Button("Off", id='force-trigger-button', style=toggle_button_style),
         html.Div(id='dummy-output-force-trigger', style={'display': 'none'}),
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
@@ -322,9 +327,12 @@ app.layout = html.Div([
     # Component for triggering downloads
     dcc.Download(id='download-dataframe-csv'),
     dcc.Interval(id='interval-component',
+    interval=1*250,  # in milliseconds
+    n_intervals=0),
+
+    dcc.Interval(id='interval-component-slow',
     interval=1*1000,  # in milliseconds
-    n_intervals=0
-)
+    n_intervals=0),
 
 ])
 
@@ -360,12 +368,14 @@ def toggle_filter(n_clicks):
 # Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
     Output('my-graph', 'figure'),
-    [Input('interval-component', 'n_intervals')],
+    [Input('interval-component', 'n_intervals'),
+     Input('normal-button', 'n_clicks')],
   # Add the switch's value as State
     prevent_initial_call=True
 )
-def update_graph(refresh):
-    global df 
+def update_graph(refresh, filter_toggle):
+    global df
+    global control_buttons_array
     ctx = dash.callback_context
 
     # Determine which input was triggered
@@ -377,25 +387,31 @@ def update_graph(refresh):
         df = pd.DataFrame()  # Reset the 'df' variable
         return {'data': [initial_trace], 'layout': layout}
     """
+    if triggered_id == 'normal-button':
+        b, a = signal.butter(3, 0.015)
+        zi = signal.lfilter_zi(b, a)
+        y_filt = signal.filtfilt(b, a, df['data'])
+        if control_buttons_array[4] == 0:
+            trace = go.Scatter(x=df['t'], y=y_filt, mode='lines', name='Filtered Data')
+        else:
+            trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
+        return {'data': [trace], 'layout': layout}
 
     # If new file data is uploaded, update the graph
-    if triggered_id == 'interval-component':
+    if triggered_id == 'interval-component' and (control_buttons_array[2] == 1 or control_buttons_array[1] == 1):
         # Generate a timestamp to force the update
         timestamp = datetime.now()
-        if control_buttons_array[2] == 1:
-            run()
+        global_state['single_button'] = 0
         
-        """
         # Check if the filter switch is enabled and apply the filter
-        if 'On' in filter_toggle_label:
+        if control_buttons_array[4] == 1:
             # Define filter coefficients here for smoothing
-            b = [1, -0.95]  # Numerator coefficients
-            a = [1]         # Denominator coefficients
-            filtered_data = lfilter(b, a, df['data'])
-            trace = go.Scatter(x=df['t'], y=filtered_data, mode='lines', name='Filtered Data')
-        else:
-        """   
-        trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
+            b, a = signal.butter(3, 0.015)
+            zi = signal.lfilter_zi(b, a)
+            y_filt = signal.filtfilt(b, a, df['data'])
+            trace = go.Scatter(x=df['t'], y=y_filt, mode='lines', name='Filtered Data')
+        else:  
+            trace = go.Scatter(x=df['t'], y=df['data'], mode='lines', name='Original Data')
 
         return {'data': [trace], 'layout': layout}
 
@@ -519,7 +535,7 @@ def toggle_single_boolean_value(n_clicks, current_value):
     run_stat = control_buttons_array[2]
     if run_stat == 0:
         run()
-    new_value = 'False'
+    new_value = 'True'
     if new_value == 'False':
         bit_value = 0
     if new_value == 'True':
@@ -661,9 +677,17 @@ def update_every_second(n):
     other_state_array[4] = global_state['coupling']
     other_state_array[5] = global_state['sample_rate']
 
-    #print(f"Control Buttons Array: {control_buttons_array}")
+    print(f"Control Buttons Array: {control_buttons_array}")
     #print(f"Other States Array: {other_state_array}")
     return ""
+
+@app.callback(
+    Output('interval-component-slow', 'children'),
+    [Input('interval-component-slow', 'n_intervals')]
+)
+def repeated_run(get):
+    if control_buttons_array[2] == 1:
+        run()
 
 if __name__ == '__main__':
     app.run_server(debug=True)
