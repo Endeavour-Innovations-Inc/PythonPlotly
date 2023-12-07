@@ -18,6 +18,8 @@ import numpy as np
 import time 
 from scipy import signal
 
+import usb.core
+
 server = Flask(__name__)
 CORS(server)
 app = dash.Dash(__name__, server=server, routes_pathname_prefix='/dash/')
@@ -26,7 +28,7 @@ def run():
     global df
     force = other_state_array[0]
     trig = other_state_array[2]
-    trig_bin = "{0:012b}".format(int(trig*1000))
+    trig_bin = "{0:012b}".format(int(trig*2000))
     trig_low = int(trig_bin[4:12], 2)
     trig_hi = int(trig_bin[0:4], 2)
 
@@ -59,10 +61,11 @@ def run():
         t_data = []
 
         data_ready = None
-        try:
-            data_ready = si.check_for_data()
-        except usb.core.USBError:
-            print('Data Not Ready')
+        while data_ready == None:
+            try:
+                data_ready = si.check_for_data()
+            except usb.core.USBError:
+                print('Data Not Ready')
 
         print('Interrupt Received From Device - Requesting Data...')
 
@@ -152,7 +155,7 @@ rectangle_4_content = html.Div([
                 {'label': 'AC', 'value': 'AC'},
                 {'label': 'DC', 'value': 'DC'}
             ],
-            value='AC',  # Default value
+            value='DC',  # Default value
             clearable=False,
             style=dropdown_style
         ),
@@ -233,10 +236,19 @@ rectangle_8_content = html.Div([
     html.Div([
         html.Div("Level", style=centered_section_style),
         dcc.Dropdown(
-            id='level-dropdown',
-            options=[{'label': '1V', 'value': 1}, 
-                     {'label': '5V', 'value': 5}],
-            value=1,  # Default value
+            id='level',
+            options=[{'label': '0.0V', 'value': 0.0},
+                     {'label': '0.5V', 'value': 0.5},
+                     {'label': '1.0V', 'value': 1.0},
+                     {'label': '1.5V', 'value': 1.5},
+                     {'label': '2.0V', 'value': 2.0}, 
+                     {'label': '2.5V', 'value': 2.5},
+                     {'label': '3.0V', 'value': 3.0},
+                     {'label': '3.5V', 'value': 3.5},
+                     {'label': '4.0V', 'value': 4.0},
+                     {'label': '4.5V', 'value': 4.5},
+                     {'label': '5.0V', 'value': 5.0}],
+            value=0,  # Default value
             clearable=False,
             style=dropdown_style
         ),
@@ -392,9 +404,9 @@ df = pd.DataFrame(d)
 )
 def toggle_force_trigger(n_clicks):
     if n_clicks % 2 == 0:
-        return "Off"
-    else:
         return "On"
+    else:
+        return "Off"
 
 """
 # Callback to handle filter toggle button
@@ -643,7 +655,7 @@ def toggle_stop_boolean_value(n_clicks, current_value):
 # Level Selection:
 @app.callback(
     Output('dummy-output-level', 'children'),
-    [Input('level-dropdown', 'value')],
+    [Input('level', 'value')],
     prevent_initial_call=True
 )
 def log_level_change(new_value):
