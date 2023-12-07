@@ -46,6 +46,7 @@ def run():
     if control_buttons_array[0] == 0:
         raise ValueError('Simple Scope is not connected!')
         print('Simple Scope is not connected!')
+        global_state['run_button'] = 0
     else:
         try:
             si.configure_scope(configs)
@@ -256,6 +257,46 @@ rectangle_8_content = html.Div([
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'})
 ], style={'height': '100%', 'width': '100%', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-around'})
 
+# export data button setup
+rectangle_10_content = html.Div(
+    id='rectangle-10',
+    style={
+        'right': '10px',
+        'bottom': '10px',
+        'width': '250px',
+        'height': '45px',
+        'border': '1px solid black',
+        'borderRadius': '5px',
+        'display': 'flex',
+        'alignItems': 'right',
+        'justifyContent': 'space-between',
+        'backgroundColor': 'transparent',
+        'padding': '5px',
+    },
+    children=[
+        html.Div(
+            'Export Data',
+            style={
+                'border': '2px solid darkgreen',
+                'padding': '10px 20px',
+                'borderRadius': '5px',
+                'backgroundColor': 'transparent',
+                'color': 'darkgreen',
+                'fontWeight': 'bold',
+            }
+        ),
+        html.Button(
+            'Export',
+            id='export-button',
+            style={
+                'display': 'inline-block',
+                'margin': '0 auto',
+                'textAlign': 'center',
+            }
+        )
+    ]
+) 
+
 # First row of rectangles with adjusted layout
 first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(id='rectangle-1', children="Connect to Simple Scope", style=rectangle_1_style),
@@ -264,6 +305,8 @@ first_row_rectangles = html.Div(style=row_style, children=[
     html.Div(id='combined-rectangle-2-3', children=combined_rectangle_content, style=combined_rectangle_style),
     html.Div(id='dummy-output-sample-rate', style={'display': 'none'}),
     html.Div(id='rectangle-4', children=rectangle_4_content, style=long_rectangle_style_scope),
+    html.Div(style={'width': '40px', 'display': 'inline-block'}),  # Spacer Div
+    rectangle_10_content
 ])
 
 # App layout definition including Upload component and Graph component
@@ -353,6 +396,7 @@ def toggle_force_trigger(n_clicks):
     else:
         return "On"
 
+"""
 # Callback to handle filter toggle button
 @app.callback(
     Output('filter-toggle', 'children'),
@@ -363,7 +407,7 @@ def toggle_filter(n_clicks):
         return 'Enable Filter: Off'
     else:  # If odd number of clicks, filter is on
         return 'Enable Filter: On'
-
+"""
 
 # Combined callback for updating graph with uploaded CSV data, resetting the graph, and applying a filter
 @app.callback(
@@ -433,21 +477,22 @@ def download_csv():
         download_name='data.csv'
     )
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# New UI callbacks for Dash
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # Callback to trigger a download when the 'Export Data' button is clicked
 @app.callback(
     Output('download-dataframe-csv', 'data'),
     [Input('export-button', 'n_clicks')],
+    [State('run-boolean-value', 'children')],
     prevent_initial_call=True
 )
-def export_data(n_clicks):
-    if n_clicks is None:
+def export_data(n_clicks, run_button_state):
+    if n_clicks is None or run_button_state == 'True':
         raise PreventUpdate
     # Trigger download
     return dcc.send_data_frame(df.to_csv, "data.csv", index=False)
-
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# New UI callbacks for Dash
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # "Connect to simple scope" button
 @app.callback(
@@ -658,7 +703,7 @@ def toggle_normal_button(n_clicks, current_label):
 
 # button state tracking
 @app.callback(
-    Output('interval-component', 'children'),
+    Output('interval-component', 'n_intervals'),
     [Input('interval-component', 'n_intervals')]
 )
 def update_every_second(n):
@@ -677,12 +722,12 @@ def update_every_second(n):
     other_state_array[4] = global_state['coupling']
     other_state_array[5] = global_state['sample_rate']
 
-    print(f"Control Buttons Array: {control_buttons_array}")
+    #print(f"Control Buttons Array: {control_buttons_array}")
     #print(f"Other States Array: {other_state_array}")
-    return ""
+    return 0
 
 @app.callback(
-    Output('interval-component-slow', 'children'),
+    Output('interval-component-slow', 'n_intervals'),
     [Input('interval-component-slow', 'n_intervals')]
 )
 def repeated_run(get):

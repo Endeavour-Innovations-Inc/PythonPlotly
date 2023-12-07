@@ -93,6 +93,9 @@ rectangle_style = {
 
 # Define a style for the container of each row of rectangles
 row_style = {
+    'display': 'flex',
+    'justifyContent': 'space-between',
+    'alignItems': 'center',
     'textAlign': 'center',  # Center align the rectangles
     'marginBottom': '20px'  # Margin at the bottom of each row
 }
@@ -220,6 +223,14 @@ long_rectangle_width = 3 * 100 + 4 * 10  # Three rectangles width plus margins
 
 long_rectangle_style = {
     'width': f'{800}px',  # Set the combined width
+    'height': '100px',  # Keep the height the same as the original rectangles
+    'border': '1px solid black',  # Border style
+    'display': 'inline-block',  # Display type to align horizontally
+    'margin': '10px'  # Margin around the rectangle
+}
+
+long_rectangle_style_adjusted = {
+    'width': f'{600}px',  # Set the combined width
     'height': '100px',  # Keep the height the same as the original rectangles
     'border': '1px solid black',  # Border style
     'display': 'inline-block',  # Display type to align horizontally
